@@ -262,6 +262,10 @@
   .card h2{margin:0 0 10px;font-size:14px;font-weight:700;color:var(--ink);}
   .card h2 small{display:block;font-weight:400;color:var(--ink-soft);font-size:11.5px;margin-top:2px;}
   .cat-title{font-size:12px;font-weight:800;color:var(--primary);text-transform:uppercase;letter-spacing:.4px;margin:14px 0 8px;}
+  .accion-row{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:8px;}
+  .accion-row .ac-actividad{flex:1 1 180px;}
+  .accion-row .ac-responsable{flex:1 1 120px;}
+  .accion-row .ac-fecha{flex:0 0 140px;}
   .cat-title:first-child{margin-top:0;}
   label{display:block;font-size:12px;font-weight:600;color:var(--ink-soft);margin:10px 0 4px;}
   label:first-child{margin-top:0;}
@@ -534,6 +538,94 @@
             <span class="home-code">FT-SST-014</span>
           </span>
         </button>
+        <button class="home-card" data-abrir="zorrillos" type="button">
+          <span class="home-icon" style="background:var(--good-bg);color:var(--good);">🛺</span>
+          <span class="home-body">
+            <span class="home-title">Carromatos (Zorrillos)</span>
+            <span class="home-desc">Uno por inspección — repite para el siguiente</span>
+            <span class="home-code">SST-FT-015</span>
+          </span>
+        </button>
+        <button class="home-card" data-abrir="vagones" type="button">
+          <span class="home-icon" style="background:var(--bad-bg);color:var(--bad);">🚃</span>
+          <span class="home-body">
+            <span class="home-title">Vagones</span>
+            <span class="home-desc">Pasadores, puertas, rodillos — por vagón</span>
+            <span class="home-code">Código en revisión</span>
+          </span>
+        </button>
+        <button class="home-card" data-abrir="tractores" type="button">
+          <span class="home-icon" style="background:var(--warn-bg);color:var(--warn);">🚜</span>
+          <span class="home-body">
+            <span class="home-title">Tractor agrícola</span>
+            <span class="home-desc">Revisión mecánica completa</span>
+            <span class="home-code">FT-SST-012</span>
+          </span>
+        </button>
+        <button class="home-card" data-abrir="herramientas" type="button">
+          <span class="home-icon" style="background:var(--na-bg);color:var(--na);">🔧</span>
+          <span class="home-body">
+            <span class="home-title">Herramientas manuales</span>
+            <span class="home-desc">Barras, palines, machetes, palas — por trabajador</span>
+            <span class="home-code">FT-SST-013</span>
+          </span>
+        </button>
+        <button class="home-card" data-abrir="locativa" type="button">
+          <span class="home-icon" style="background:var(--good-bg);color:var(--good);">🏢</span>
+          <span class="home-body">
+            <span class="home-title">Inspección locativa</span>
+            <span class="home-desc">Peligros físicos, locativos, eléctricos y más — por área</span>
+            <span class="home-code">SST-FT-019</span>
+          </span>
+        </button>
+        <button class="home-card" data-abrir="rotulos" type="button">
+          <span class="home-icon" style="background:var(--bad-bg);color:var(--bad);">🏷️</span>
+          <span class="home-body">
+            <span class="home-title">Rótulos</span>
+            <span class="home-desc">Texto, color y amarradera — por rótulo</span>
+            <span class="home-code">Sin código oficial</span>
+          </span>
+        </button>
+        <button class="home-card" data-abrir="kitderrames" type="button">
+          <span class="home-icon" style="background:var(--warn-bg);color:var(--warn);">🛢️</span>
+          <span class="home-body">
+            <span class="home-title">Kit de derrames</span>
+            <span class="home-desc">Elementos del kit y acciones de mejora</span>
+            <span class="home-code">Sin código oficial</span>
+          </span>
+        </button>
+        <button class="home-card" data-abrir="alturas" type="button">
+          <span class="home-icon" style="background:var(--bad-bg);color:var(--bad);">🧗</span>
+          <span class="home-body">
+            <span class="home-title">Trabajo en alturas</span>
+            <span class="home-desc">Arnés, eslingas, mosquetones y línea de vida</span>
+            <span class="home-code">FT-SST-011</span>
+          </span>
+        </button>
+        <button class="home-card" data-abrir="vehiculo" type="button">
+          <span class="home-icon" style="background:var(--good-bg);color:var(--good);">🚗</span>
+          <span class="home-body">
+            <span class="home-title">Vehículo liviano</span>
+            <span class="home-desc">Documentos y revisión mecánica completa</span>
+            <span class="home-code">Sin código oficial</span>
+          </span>
+        </button>
+        <button class="home-card" data-abrir="motos" type="button">
+          <span class="home-icon" style="background:var(--warn-bg);color:var(--warn);">🏍️</span>
+          <span class="home-body">
+            <span class="home-title">Motocicletas</span>
+            <span class="home-desc">Documentos, luces y mecánica</span>
+            <span class="home-code">SST-FT-016</span>
+          </span>
+        </button>
+        <button class="home-card" data-abrir="bus" type="button">
+          <span class="home-icon" style="background:var(--na-bg);color:var(--na);">🚌</span>
+          <span class="home-body">
+            <span class="home-title">Bus de transporte de personal</span>
+            <span class="home-desc">Documentos y revisión mecánica completa</span>
+            <span class="home-code">SST-FT-017</span>
+          </span>
+        </button>
       </div>
     </div>
   </div>
@@ -541,6 +633,17 @@
   <div id="screen-bombaespalda" class="screen hidden"></div>
   <div id="screen-bombainsufladora" class="screen hidden"></div>
   <div id="screen-motosierra" class="screen hidden"></div>
+  <div id="screen-zorrillos" class="screen hidden"></div>
+  <div id="screen-vagones" class="screen hidden"></div>
+  <div id="screen-tractores" class="screen hidden"></div>
+  <div id="screen-herramientas" class="screen hidden"></div>
+  <div id="screen-locativa" class="screen hidden"></div>
+  <div id="screen-rotulos" class="screen hidden"></div>
+  <div id="screen-kitderrames" class="screen hidden"></div>
+  <div id="screen-alturas" class="screen hidden"></div>
+  <div id="screen-vehiculo" class="screen hidden"></div>
+  <div id="screen-motos" class="screen hidden"></div>
+  <div id="screen-bus" class="screen hidden"></div>
   <div id="screen-epp" class="screen hidden">
 <div class="app">
 
@@ -3259,6 +3362,35 @@ const EQUIPO_CONFIGS = {
       '¿Se inspeccionó el área y se removieron objetos peligrosos para la actividad o se señalizaron?',
     ],
   },
+  alturas: {
+    titulo: 'Equipo para trabajo en alturas', codigo: 'FT-SST-011',
+    subtitulo: 'Arnés, eslingas, mosquetones y línea de vida',
+    campos: [
+      {id:'cargoResponsable', label:'Cargo del responsable'},
+      {id:'idArnes', label:'Arnés — N° serie / fecha fabricación / marca'},
+      {id:'idEslinga', label:'Eslinga — N° serie / fecha fabricación / marca'},
+      {id:'idEslingaY', label:'Eslinga en Y — N° serie / fecha fabricación / marca'},
+      {id:'idMosqueton', label:'Mosquetón — N° serie / fecha fabricación / marca'},
+      {id:'idLineaVida', label:'Línea de vida portátil — N° serie / fecha fabricación / marca'},
+      {id:'idFreno', label:'Freno o arrestador de caídas — N° serie / fecha fabricación / marca'},
+      {id:'idAnclaje', label:'Anclaje portátil — N° serie / fecha fabricación / marca'},
+    ],
+    items: [
+      'Arnés — sin cortes, desgarros, fisuras, deformaciones, corrosión ni moho; con etiqueta de certificación vigente',
+      'Tie off (adaptador portátil) — sin cortes, desgarros, piezas faltantes, corrosión ni moho; con etiqueta de certificación vigente',
+      'Eslinga en Y — sin cortes, desgarros, deformaciones, corrosión ni moho; con etiqueta de certificación vigente',
+      'Eslinga en posicionamiento — sin cortes, desgarros, deformaciones, corrosión ni moho; con etiqueta de certificación vigente',
+      'Mosquetones y ganchos — sin bloqueo excesivo, deformaciones ni grietas; resortes y freno funcionan; con etiqueta de certificación vigente',
+      'Línea de vida — sin deformaciones, picaduras, desgaste, corrosión ni moho; con etiqueta de certificación vigente',
+      'Anclaje portátil — sin deformaciones, corrosión ni moho; con etiqueta de certificación vigente',
+    ],
+    preguntas: [
+      '¿El trabajador recibió instrucción en el procedimiento de la labor?',
+      '¿Conoce los peligros de la actividad?',
+      '¿Utiliza sistema de protección contra caídas de altura (arnés completo) en buen estado y normalizado?',
+      '¿Cuenta con el curso para trabajo seguro en alturas?',
+    ],
+  },
 };
 
 const eqpState = {};
@@ -3810,6 +3942,890 @@ function eqpInit(tipo){
 }
 
 
+
+
+// =========================== MÓDULO GENÉRICO: UNIDAD REPETIBLE ===========================
+// Un solo motor para Carromatos/Zorrillos, Vagones, Tractores y Herramientas manuales:
+// se identifica la unidad (N° de carromato, N° de vagón, N° de tractor, o el trabajador
+// dueño de las herramientas), se califica un checklist corto, y se repite para la
+// siguiente unidad. Agregar un formulario nuevo de este tipo es solo sumar una entrada
+// a UNIDAD_CONFIGS.
+
+const UNIDAD_CONFIGS = {
+  zorrillos: {
+    titulo: 'Carromatos (Zorrillos)', codigo: 'SST-FT-015',
+    subtitulo: 'Un carromato por inspección — repite para el siguiente',
+    idLabel: 'N° de carromato o zorrillo', idPlaceholder: 'Ej: 3',
+    camposHeader: [{id:'lugar', label:'Lugar de inspección'}, {id:'labor', label:'Labor'}],
+    estadoOpciones: ['B','M','NT'],
+    items: ['Ajuste de rodamientos','Estado y ajuste de tornillos de planche','Pernos','Llantas','Rines','Planchón - cajón','Unión y dobles de brazo sin fisuras','Correas - aperos','Sin bordes metálicos cortantes'],
+    firmas: [{key:'trabajador', label:'Firma del trabajador'}, {key:'responsable', label:'Firma del responsable de la inspección'}],
+  },
+  vagones: {
+    titulo: 'Vagones', codigo: '',
+    subtitulo: 'Un vagón por inspección — repite para el siguiente',
+    idLabel: 'N° de vagón', idPlaceholder: 'Ej: 12',
+    camposHeader: [{id:'lugar', label:'Lugar / Área'}],
+    estadoOpciones: ['B','M','NA'],
+    items: ['Pasadores - Bien pinados, desgaste en exceso','Puertas - Ajustada, fija','Estado general - Pintura, soldadura, marcación, reflectivos','Rodillos - Sin óxido, engrasados, ajustados'],
+    firmas: [{key:'responsable', label:'Firma del responsable de la inspección'}],
+  },
+  tractores: {
+    titulo: 'Tractor agrícola', codigo: 'FT-SST-012',
+    subtitulo: 'Revisión mecánica completa',
+    idLabel: 'N° de tractor', idPlaceholder: 'Ej: 3',
+    camposHeader: [{id:'operario', label:'Operario'}],
+    estadoOpciones: ['B','M'],
+    items: [
+      'Estado de las ruedas, neumáticos - Desgaste, inflado, fugas, daño',
+      'Tuercas de la rueda - Desgaste, daño',
+      'Defensas, parachoques - Desgaste en exceso, daños',
+      'Tuberías, mangueras - Desgaste en exceso, daños, fugas',
+      'Uniones, cilindros de la dirección - Fugas, daños',
+      'Transmisión, caja de transferencia - Fugas, marcha adelante, atrás',
+      'Aceite de transmisión - Fugas, nivel de fluido',
+      'Tanque de combustible - Nivel de combustible, daños, fugas',
+      'Ejes - mandos finales, diferenciales, frenos, embrague - Fugas, daños, desgaste',
+      'Tanque hidráulico - Nivel de combustible, daños, fugas',
+      'Luces delanteras y traseras - Funcionamiento, daños de lentes, caja o cables',
+      'Compartimiento de la batería - Limpieza, tuercas y pernos flojos',
+      'Aceite de motor - Nivel de fluido',
+      'Refrigerante de motor - Nivel de fluido',
+      'Radiador - Obstrucción de aletas, fugas, nivel de fluido',
+      'Todas las mangueras - Fisuras, marcas de desgaste, fugas',
+      'Filtros de combustible / separador de agua - Fugas / agua de drenaje (si tiene)',
+      'Todas las correas - Tensión, desgaste, fisuras',
+      'Filtro de aire - Indicador de obstrucción, limpieza',
+      'Comportamiento del motor - Acumulación de residuos o tierra, fugas',
+      'Agarraderas, peldaños - Condición, desgaste en exceso',
+      'Asiento - Ajuste de altura, peso, se pueden alcanzar los pedales',
+      'Cinturón de seguridad y montaje - Daño, desgaste, ajuste, antigüedad',
+      'Bocina - Funcionamiento correcto',
+      'Espejos - Daños, ajustes para mejorar visibilidad',
+      'Medidores, indicadores, interruptores, controles - Daños, funcionamiento',
+      'Interior de la cabina - Limpieza',
+    ],
+    firmas: [{key:'responsable', label:'Firma del responsable de la inspección / operario'}],
+  },
+  herramientas: {
+    titulo: 'Herramientas manuales', codigo: 'FT-SST-013',
+    subtitulo: 'Un trabajador por inspección — repite para el siguiente',
+    idLabel: 'Nombre del trabajador', idPlaceholder: 'Nombre completo',
+    camposHeader: [{id:'lugar', label:'Lugar / Área'}],
+    estadoOpciones: ['B','M','NA'],
+    items: [
+      'Barras / Barretones - Estado general',
+      'Gancho Malayo - Cuchillo sin abolladuras, sin fisura, ajustado al tubo',
+      'Gancho Malayo - Vara de aluminio y extensión sin fisuras, sin dobleces',
+      'Gancho Malayo - Abrazaderas funcionales y en buen estado',
+      'Gancho Malayo - Funda protectora del cuchillo en buen estado',
+      'Palín - Cabo en buen estado, sin bordes irregulares (astillas)',
+      'Palín - Ajuste en el mango, filo regular, sin fisuras',
+      'Rastrillo - Estado del cabo (sin astillas), funcional',
+      'Machete - Rula - Estado del mango y la funda',
+      'Palas - Revisar ajuste del mango, astillas',
+      'Limas - Estado de superficie estriada y del mango',
+    ],
+    firmas: [{key:'trabajador', label:'Firma del trabajador'}],
+  },
+  locativa: {
+    titulo: 'Inspección locativa', codigo: 'SST-FT-019',
+    subtitulo: 'Peligros físicos, locativos, eléctricos y más — por área',
+    idLabel: 'Área o locación', idPlaceholder: 'Ej: Oficina Vigía',
+    camposHeader: [{id:'responsableArea', label:'Responsable del área'}],
+    estadoOpciones: ['SI','NO','NA'],
+    items: [
+      {categoria:'1. Peligros físicos', aspecto:'Existe buena iluminación artificial y natural'},
+      {categoria:'1. Peligros físicos', aspecto:'Las luminarias están en buen estado'},
+      {categoria:'1. Peligros físicos', aspecto:'Hay buena ventilación en el área'},
+      {categoria:'1. Peligros físicos', aspecto:'El nivel de ruido es adecuado (condiciones normales inferiores a 85 db)'},
+      {categoria:'1. Peligros físicos', aspecto:'Existen controles de ruido (en la fuente, en el medio, en el trabajador)'},
+      {categoria:'1. Peligros físicos', aspecto:'La temperatura es confortable'},
+      {categoria:'2. Peligros locativos', aspecto:'Los muros están en buen estado (sin grietas, sin humedad, pintura en buen estado)'},
+      {categoria:'2. Peligros locativos', aspecto:'Escaleras en buen estado (pasamanos, antideslizantes)'},
+      {categoria:'2. Peligros locativos', aspecto:'Pisos en buen estado'},
+      {categoria:'2. Peligros locativos', aspecto:'Ventanas, puertas en buen estado (manijas, chapas)'},
+      {categoria:'2. Peligros locativos', aspecto:'Techos en buen estado (sin goteras)'},
+      {categoria:'2. Peligros locativos', aspecto:'Áreas de circulación despejadas (escaleras, zonas de tránsito en almacén, etc.)'},
+      {categoria:'2. Peligros locativos', aspecto:'Están claramente demarcadas las áreas de trabajo y rutas de tránsito'},
+      {categoria:'2. Peligros locativos', aspecto:'En general, ¿las sillas están en buen estado?'},
+      {categoria:'2. Peligros locativos', aspecto:'Las divisiones modulares, escritorios y cajones se encuentran en buenas condiciones'},
+      {categoria:'3. Peligros eléctricos', aspecto:'Cables eléctricos debidamente entubados'},
+      {categoria:'3. Peligros eléctricos', aspecto:'Los empalmes o conexiones están en buen estado'},
+      {categoria:'3. Peligros eléctricos', aspecto:'Tomas e interruptores en buen estado'},
+      {categoria:'3. Peligros eléctricos', aspecto:'Se observan cajas o tomacorrientes sin sobrecarga'},
+      {categoria:'3. Peligros eléctricos', aspecto:'Cables en buen estado'},
+      {categoria:'3. Peligros eléctricos', aspecto:'Los tableros, cajas y circuitos están identificados'},
+      {categoria:'3. Peligros eléctricos', aspecto:'Los tableros y cajas están libres de obstáculos'},
+      {categoria:'3. Peligros eléctricos', aspecto:'Existe señalización de peligros'},
+      {categoria:'4. Peligros de seguridad', aspecto:'Los extintores son los adecuados al tipo de peligros del área'},
+      {categoria:'4. Peligros de seguridad', aspecto:'Extintores de carga vigente'},
+      {categoria:'4. Peligros de seguridad', aspecto:'Extintores libres de obstáculos'},
+      {categoria:'4. Peligros de seguridad', aspecto:'Existe señalización de extintores'},
+      {categoria:'4. Peligros de seguridad', aspecto:'Existe señalización en todas las instalaciones y en las salidas de emergencia'},
+      {categoria:'4. Peligros de seguridad', aspecto:'Las áreas de salida de emergencia y punto de encuentro se encuentran despejadas'},
+      {categoria:'4. Peligros de seguridad', aspecto:'El personal cuenta con los elementos de protección personal (EPP)'},
+      {categoria:'4. Peligros de seguridad', aspecto:'Hay camilla en el área (solo si es necesaria)'},
+      {categoria:'4. Peligros de seguridad', aspecto:'Hay botiquín y control de consumo'},
+      {categoria:'4. Peligros de seguridad', aspecto:'¿Se tiene la lista de teléfonos de emergencia a la mano?'},
+      {categoria:'5. Peligros biológicos', aspecto:'El área está libre de insectos y roedores'},
+      {categoria:'6. Peligro biomecánico', aspecto:'Espacio de trabajo adecuado (miembros inferiores, desplazamientos y salidas del puesto)'},
+      {categoria:'6. Peligro biomecánico', aspecto:'Altura adecuada de la pantalla del computador respecto a la horizontal'},
+      {categoria:'6. Peligro biomecánico', aspecto:'Silla en buenas condiciones: espaldar, asiento, patas o base'},
+      {categoria:'6. Peligro biomecánico', aspecto:'El peso de los objetos que levanta o almacena está dentro de los límites permisibles'},
+      {categoria:'7. Orden y aseo', aspecto:'El área se encuentra organizada'},
+      {categoria:'7. Orden y aseo', aspecto:'Se realiza la clasificación de residuos sólidos en forma correcta'},
+      {categoria:'7. Orden y aseo', aspecto:'Los residuos peligrosos se separan y disponen con empresas autorizadas'},
+      {categoria:'7. Orden y aseo', aspecto:'El sitio inspeccionado se encuentra en buen estado de aseo y mantenimiento'},
+      {categoria:'8. Saneamiento básico', aspecto:'Servicios higiénicos en buen estado y limpieza'},
+      {categoria:'8. Saneamiento básico', aspecto:'Luminarias de baños en buen estado'},
+      {categoria:'8. Saneamiento básico', aspecto:'Hay papel higiénico, jabón, toallas y papeleras con pedal y tapa'},
+      {categoria:'8. Saneamiento básico', aspecto:'Están los inodoros limpios y en buen estado'},
+      {categoria:'8. Saneamiento básico', aspecto:'Se tienen reguladores o ahorradores de agua en lavamanos y sanitarios'},
+      {categoria:'9. Peligro mecánico (herramientas de oficina)', aspecto:'Equipos y herramientas de oficina en buen estado'},
+      {categoria:'9. Peligro mecánico (herramientas de oficina)', aspecto:'Archivo rodante en buen estado'},
+      {categoria:'10. Preguntas y observación de tareas', aspecto:'Los funcionarios cumplen con las normas de seguridad de su actividad'},
+      {categoria:'10. Preguntas y observación de tareas', aspecto:'Los funcionarios conocen los peligros a los que están expuestos'},
+      {categoria:'10. Preguntas y observación de tareas', aspecto:'El personal tiene claro qué hacer en caso de incidente, accidente de trabajo o enfermedad laboral'},
+      {categoria:'10. Preguntas y observación de tareas', aspecto:'Los funcionarios conocen la Política de Seguridad y Salud en el Trabajo'},
+      {categoria:'10. Preguntas y observación de tareas', aspecto:'Los funcionarios saben cómo usar y cuidar sus EPP'},
+      {categoria:'11. Medio ambiente — Agua y energía', aspecto:'Equipos electrónicos'},
+      {categoria:'11. Medio ambiente — Agua y energía', aspecto:'Conexiones hidráulicas'},
+      {categoria:'11. Medio ambiente — Agua y energía', aspecto:'Tanque de almacenamiento de agua, planta de tratamiento (si aplica)'},
+      {categoria:'11. Medio ambiente — Agua y energía', aspecto:'Red eléctrica (cableado aéreo, medidor, postes)'},
+      {categoria:'11. Medio ambiente — Agua y energía', aspecto:'Otro'},
+      {categoria:'11. Medio ambiente — Sustancias químicas', aspecto:'Las sustancias químicas están rotuladas'},
+      {categoria:'11. Medio ambiente — Sustancias químicas', aspecto:'El área cuenta con las hojas de seguridad'},
+      {categoria:'11. Medio ambiente — Sustancias químicas', aspecto:'Otro'},
+    ],
+    firmas: [{key:'responsable', label:'Firma responsable de la inspección'}, {key:'sgsst', label:'Firma responsable del SG-SST'}],
+  },
+  rotulos: {
+    titulo: 'Rótulos', codigo: '',
+    subtitulo: 'Texto, color y amarradera — por rótulo',
+    idLabel: 'Sede - Área donde está el rótulo', idPlaceholder: 'Ej: Bodega insumos',
+    camposHeader: [{id:'trabajador', label:'Trabajador'}, {id:'cargoTrabajador', label:'Cargo del trabajador'}],
+    estadoOpciones: ['SI','NO','NA'],
+    items: ['Texto','Color','Amarradera'],
+    firmas: [{key:'responsable', label:'Firma del responsable de la inspección'}],
+  },
+  kitderrames: {
+    titulo: 'Kit de derrames', codigo: '',
+    subtitulo: 'Elementos del kit y acciones de mejora',
+    idLabel: 'Sede - Área', idPlaceholder: 'Ej: Bodega Corozos',
+    camposHeader: [{id:'trabajador', label:'Trabajador'}, {id:'cargoTrabajador', label:'Cargo del trabajador'}],
+    estadoOpciones: ['C','NC','NA'],
+    itemCantidad: true,
+    items: ['Balde','Estopa','Pala','Escoba','Bolsa roja','Guantes plásticos'],
+    accionesMejora: {max: 3},
+    firmas: [{key:'responsable', label:'Firma del responsable de la inspección'}],
+  },
+  vehiculo: {
+    titulo: 'Vehículo liviano', codigo: '',
+    subtitulo: 'Documentos y revisión mecánica completa',
+    idLabel: 'Placa del vehículo', idPlaceholder: 'Ej: ABC123',
+    camposHeader: [
+      {id:'marca', label:'Marca'}, {id:'modelo', label:'Modelo'},
+      {id:'pasajeros', label:'Cantidad de pasajeros'},
+      {id:'responsableVehiculo', label:'Responsable del vehículo'},
+      {id:'tipoVehiculo', label:'Tipo de vehículo'},
+    ],
+    estadoOpciones: ['B','M','NA'],
+    items: [
+      'Licencia de conducción vigente (anotar N° y fecha de vencimiento en observación)',
+      'SOAT vigente (anotar N° y fecha de vencimiento en observación)',
+      'Póliza de responsabilidad civil vigente (anotar N° y fecha de vencimiento en observación)',
+      'Revisión tecnomecánica y de gases vigente (anotar fecha de vencimiento en observación)',
+      'Estado general del motor / fugas','Revisión de fluidos','Sistema caja de velocidad',
+      'Estado de correas (tensión, ausencia de fisuras)','Revisión de baterías (no sulfatada, tapa y seguros)',
+      'Revisión estado de carrocería (golpes, rayones)','Espejos laterales','Parabrisas','Limpiabrisas (plumillas)',
+      'Vidrios de las puertas','Compuerta de platón','Platón','Revisión de loderas',
+      'Revisión de defensa delantera y trasera','Revisión estado de exosto',
+      'Llantas delanteras (presión, labrado y profundidad)','Llantas traseras (presión, labrado y profundidad)',
+      'Llanta de repuesto (presión, labrado y profundidad)','Pedales de comando (embrague, freno, acelerador)',
+      'Revisión funcionamiento de freno de emergencia','Instrumentos de tablero (incluye testigos)',
+      'Cinturones de seguridad (todos los puestos)','Espejo retrovisor','Revisión funcionamiento del pito',
+      'Revisión elementos de seguridad pasiva (airbag y apoya cabeza)','Revisión estado de las sillas',
+      'Ausencia de distractores (calcomanías, cortinas, muñecos, elementos sueltos)',
+      'Revisión funcionamiento de manijas elevavidrios, seguros puertas',
+      'Luces delanteras (altas y bajas)','Luces traseras','Luces direccionales (delanteras y traseras)',
+      'Luces de parqueo','Luces de freno','Luz de techo','Sistema de frenos','Freno de parqueo',
+      'Sistema de dirección','Estado de la suspensión','Alarma de retroceso','Indicador de velocidad',
+      'Aseo interior y exterior del vehículo',
+      'Extintor (fecha de vencimiento, presión, etiquetas, manguera y válvula)','Botiquín (estado y elementos)',
+      'Gato (con capacidad para elevar el vehículo)','Crucetas','Conos de seguridad','Cuñas o (2) tacos',
+      'Caja de herramientas (alicate, destornilladores, llaves)','Linterna',
+      'Cinta de señalización reflectiva','Kit antiderrame',
+    ],
+    firmas: [{key:'conductor', label:'Firma del conductor'}, {key:'responsable', label:'Firma del responsable de la inspección'}],
+  },
+  motos: {
+    titulo: 'Motocicletas', codigo: 'SST-FT-016',
+    subtitulo: 'Documentos, luces y mecánica',
+    idLabel: 'Placa de la moto', idPlaceholder: 'Ej: XYZ12A',
+    camposHeader: [
+      {id:'modelo', label:'Modelo'}, {id:'cilindraje', label:'Cilindraje'}, {id:'marca', label:'Marca'},
+      {id:'conductor', label:'Conductor'}, {id:'labor', label:'Labor'},
+    ],
+    estadoOpciones: ['B','M','NA'],
+    items: [
+      'SOAT vigente (anotar N°, aseguradora y vencimiento en observación)',
+      'Tarjeta de propiedad vigente (anotar fecha de vencimiento en observación)',
+      'Licencia de conducción vigente, sin restricciones aplicables (anotar N° y vencimiento en observación)',
+      'Revisión tecnomecánica vigente (anotar fecha de vencimiento en observación)',
+      'Direccionales delanteras','Direccionales traseras','Pastillas','Luz de freno','Carenaje',
+      'Velocímetro','Pito','Revoluciones','Espejos laterales retrovisores','Latonería y pintura',
+      'Llantas sin cortaduras profundas y sin abultamientos','Llantas con huella mínima de 5mm',
+      'Niveles de líquidos (aceite y líquido para frenos)','Estado de la suspensión y la dirección',
+      'Embrague, acelerador y cambios','Estado de tacos o apoya pies','Casco, protección visual, barbuquejo',
+      'La moto queda en condiciones seguras para operar',
+    ],
+    firmas: [{key:'trabajador', label:'Firma del trabajador (con cédula)'}, {key:'responsable', label:'Firma del responsable de la inspección'}],
+  },
+  bus: {
+    titulo: 'Bus de transporte de personal', codigo: 'SST-FT-017',
+    subtitulo: 'Documentos y revisión mecánica completa',
+    idLabel: 'Placa del bus', idPlaceholder: 'Ej: ABC123',
+    camposHeader: [
+      {id:'conductor', label:'Nombre del conductor'}, {id:'propietario', label:'Nombre del propietario'},
+      {id:'docSoat', label:'SOAT — N° / aseguradora / vencimiento'},
+      {id:'docContractual', label:'Seguro contractual — N° / aseguradora / vencimiento'},
+      {id:'docExtracontractual', label:'Seguro extracontractual — N° / aseguradora / vencimiento'},
+      {id:'docLicTransito', label:'Licencia de tránsito — N° / vencimiento'},
+      {id:'docLicConduccion', label:'Licencia de conducción — N° / vencimiento'},
+      {id:'docTecnomecanica', label:'Revisión tecnomecánica y de gases — vencimiento'},
+    ],
+    estadoOpciones: ['B','M','NA'],
+    items: [
+      {categoria:'Sistema de refrigeración', aspecto:'Radiador'},
+      {categoria:'Sistema de refrigeración', aspecto:'Indicador de temperatura'},
+      {categoria:'Sistema de alimentación de combustible', aspecto:'Tubería'},
+      {categoria:'Sistema de alimentación de combustible', aspecto:'Depósito o tanque'},
+      {categoria:'Circuito de accesorios', aspecto:'Pito'},
+      {categoria:'Circuito de accesorios', aspecto:'Cinturón de seguridad del conductor'},
+      {categoria:'Circuito de accesorios', aspecto:'Limpiaparabrisas'},
+      {categoria:'Sistema eléctrico — circuito de luces', aspecto:'Plenas'},
+      {categoria:'Sistema eléctrico — circuito de luces', aspecto:'Bajas'},
+      {categoria:'Sistema eléctrico — circuito de luces', aspecto:'Estacionarias'},
+      {categoria:'Sistema eléctrico — circuito de luces', aspecto:'Direccionales'},
+      {categoria:'Sistema eléctrico — circuito de luces', aspecto:'Tablero'},
+      {categoria:'Sistema eléctrico — circuito de luces', aspecto:'Cabina'},
+      {categoria:'Sistema eléctrico — circuito de luces', aspecto:'Carrocería'},
+      {categoria:'Sistema eléctrico — circuito de luces', aspecto:'Reverso'},
+      {categoria:'Silletería', aspecto:'Soporte de los asientos'},
+      {categoria:'Sistema de evacuación de gases', aspecto:'Empaques múltiples de escape'},
+      {categoria:'Sistema de evacuación de gases', aspecto:'Silenciador'},
+      {categoria:'Sistema de evacuación de gases', aspecto:'Exosto'},
+      {categoria:'Sistema de frenos de aire', aspecto:'Estado del compresor'},
+      {categoria:'Sistema de frenos de aire', aspecto:'Regulador o gobernador'},
+      {categoria:'Sistema de frenos de aire', aspecto:'Tanque colector de aire'},
+      {categoria:'Sistema de frenos de aire', aspecto:'Válvula de seguridad'},
+      {categoria:'Sistema de frenos de aire', aspecto:'Manómetro'},
+      {categoria:'Sistema de frenos de aire', aspecto:'Tuberías'},
+      {categoria:'Sistema de frenos de aire', aspecto:'Diafragma delantero derecho'},
+      {categoria:'Sistema de frenos de aire', aspecto:'Diafragmas traseros derecho e izquierdo'},
+      {categoria:'Sistema de frenos de aire', aspecto:'Campanas y bandas'},
+      {categoria:'Sistema de frenos de aire', aspecto:'Freno de seguridad'},
+      {categoria:'Sistema de dirección', aspecto:'Cabrilla'},
+      {categoria:'Sistema de dirección', aspecto:'Caja'},
+      {categoria:'Sistema de dirección', aspecto:'Crucetas'},
+      {categoria:'Sistema de dirección', aspecto:'Terminales barra transversal'},
+      {categoria:'Sistema de dirección', aspecto:'Terminales barra longitudinal'},
+      {categoria:'Sistema de dirección', aspecto:'Ajuste biela dirección'},
+      {categoria:'Sistema de dirección', aspecto:'Brazo dirección'},
+      {categoria:'Cabina y carrocería', aspecto:'Estado general de latonería y pintura'},
+      {categoria:'Cabina y carrocería', aspecto:'Salidas de emergencia'},
+      {categoria:'Cabina y carrocería', aspecto:'Espejos retrovisores'},
+      {categoria:'Cabina y carrocería', aspecto:'Apertura y cierre de puertas'},
+      {categoria:'Cabina y carrocería', aspecto:'Chasis'},
+      {categoria:'Cabina y carrocería', aspecto:'Pisos'},
+      {categoria:'Cabina y carrocería', aspecto:'Bodegas habilitadas'},
+      {categoria:'Equipo de carretera', aspecto:'Equipo de señalización'},
+      {categoria:'Equipo de carretera', aspecto:'Extintor'},
+      {categoria:'Equipo de carretera', aspecto:'Botiquín'},
+      {categoria:'Equipo de carretera', aspecto:'Gato'},
+      {categoria:'Equipo de carretera', aspecto:'Linterna'},
+      {categoria:'Equipo de carretera', aspecto:'Herramientas varias'},
+      {categoria:'Equipo de carretera', aspecto:'Limpieza de motor'},
+      {categoria:'Cardán delantero', aspecto:'Tubo'},
+      {categoria:'Cardán delantero', aspecto:'Crucetas'},
+      {categoria:'Cardán delantero', aspecto:'Espigo'},
+      {categoria:'Cardán trasero', aspecto:'Tubo'},
+      {categoria:'Cardán trasero', aspecto:'Crucetas'},
+      {categoria:'Cardán trasero', aspecto:'Espigo'},
+      {categoria:'Cardán trasero', aspecto:'Soporte y valineras'},
+      {categoria:'Otros', aspecto:'Transmisión'},
+      {categoria:'Otros', aspecto:'Splinder'},
+      {categoria:'Otros', aspecto:'Rines'},
+      {categoria:'Otros', aspecto:'Llanta y repuesto'},
+      {categoria:'Otros', aspecto:'Ajuste de rodamientos delanteros'},
+      {categoria:'Aprobación final', aspecto:'El bus queda en condiciones seguras para operar'},
+    ],
+    firmas: [{key:'conductor', label:'Firma del conductor'}, {key:'responsable', label:'Firma del responsable de la inspección'}],
+  },
+};
+
+const udState = {};
+const UD_ESTADO_LABEL = {B:'Bueno', M:'Malo', NT:'No tiene', NA:'No aplica', SI:'Sí', NO:'No', C:'Cumple', NC:'No cumple'};
+
+function udRenderScreenHtml(tipo, cfg){
+  const camposHtml = cfg.camposHeader.map(c=>`
+      <label>${c.label}</label>
+      <input type="text" id="${tipo}_c_${c.id}">`).join('');
+  const responsableHtml = cfg.firmas.some(f=>f.key==='responsable') ? `
+      <label>Responsable de la inspección</label>
+      <input type="text" id="${tipo}_fResponsable" placeholder="Nombre completo">` : '';
+  const firmasHtml = cfg.firmas.map(f=>`
+      <div class="card">
+        <h2>${f.label}</h2>
+        <div class="sig-wrap"><canvas id="${tipo}_sig_${f.key}" class="sigcanvas"></canvas></div>
+        <div class="sig-actions"><span></span><button id="${tipo}_sigClear_${f.key}" type="button">Limpiar firma</button></div>
+        ${f.key==='responsable' ? '<p class="sig-note">Se guarda para toda la sesión — solo hace falta firmar una vez, salvo que la limpies.</p>' : ''}
+      </div>`).join('');
+  const pillsHtml = cfg.estadoOpciones.map(v=>`<div class="pill" data-v="${v}">${v}</div>`).join('');
+  const leyenda = cfg.estadoOpciones.map(v=>v+' = '+UD_ESTADO_LABEL[v]).join(' · ');
+
+  return `
+    <div class="local-note">📱 Cada inspección se guarda en este celular. Exporta a Excel desde el Historial.</div>
+    <header class="top">
+      <button class="back-btn" type="button" data-volver>← Menú</button>
+      <h1>${cfg.titulo}${cfg.codigo ? ' · '+cfg.codigo : ''}</h1>
+      <p>${cfg.subtitulo}</p>
+      <div class="tabs">
+        <button class="tab active" data-tab="nueva">Nueva inspección</button>
+        <button class="tab" data-tab="historial">Historial <span id="${tipo}_histCount" class="count-badge hidden">0</span></button>
+      </div>
+    </header>
+
+    <div id="${tipo}_tab-nueva" class="section" data-tabpanel="nueva">
+      <div id="${tipo}_editBanner" class="edit-banner hidden">
+        ✏️ Editando una inspección guardada
+        <button type="button" id="${tipo}_btnCancelarEdicion">Cancelar</button>
+      </div>
+
+      <div class="card">
+        <h2>Datos de la inspección</h2>
+        <label>Fecha</label>
+        <input type="date" id="${tipo}_fFecha">
+        <label>${cfg.idLabel}</label>
+        <input type="text" id="${tipo}_fIdentificador" placeholder="${cfg.idPlaceholder}">${camposHtml}${responsableHtml}
+      </div>
+
+      <div class="card">
+        <h2>Checklist<small>${leyenda}</small></h2>
+        <div id="${tipo}_itemsWrap"></div>
+      </div>
+${cfg.accionesMejora ? `
+      <div class="card">
+        <h2>Acciones de mejora<small>Opcional</small></h2>
+        <div id="${tipo}_accionesWrap"></div>
+      </div>` : ''}
+      <div class="card">
+        <h2>Observaciones</h2>
+        <textarea id="${tipo}_fObs" placeholder="Observaciones generales"></textarea>
+      </div>
+
+      <div class="card">
+        <h2>Foto<small>Opcional</small></h2>
+        <input type="file" id="${tipo}_fotoInput" accept="image/*" capture="environment">
+        <div class="photo-btn" id="${tipo}_fotoBtn">📷 Adjuntar foto</div>
+      </div>
+      ${firmasHtml}
+
+      <button class="btn btn-primary" id="${tipo}_btnGuardar">Guardar y agregar otra inspección</button>
+      <div id="${tipo}_recapWrap" style="margin-top:14px;"></div>
+    </div>
+
+    <div id="${tipo}_tab-historial" class="section hidden" data-tabpanel="historial">
+      <div class="filters">
+        <input type="date" id="${tipo}_filFecha">
+        <input type="text" id="${tipo}_filTexto" placeholder="Buscar…">
+      </div>
+      <button class="btn btn-ghost" id="${tipo}_btnExport" style="margin-bottom:12px;">Exportar a Excel</button>
+      <div id="${tipo}_histList"></div>
+    </div>
+  `;
+}
+
+function udStorageKey(tipo){ return 'ud_'+tipo+'_records_v1'; }
+function udLoadRecords(tipo){
+  try{ udState[tipo].records = JSON.parse(localStorage.getItem(udStorageKey(tipo)) || '[]'); }
+  catch(e){ udState[tipo].records = []; }
+}
+function udSaveRecords(tipo){
+  const st = udState[tipo];
+  try{ localStorage.setItem(udStorageKey(tipo), JSON.stringify(st.records)); }
+  catch(e){ toast('⚠️ No se pudo guardar — memoria del celular llena'); }
+  const c = document.getElementById(tipo+'_histCount');
+  c.textContent = st.records.length;
+  c.classList.toggle('hidden', st.records.length===0);
+}
+
+function udBuildItems(tipo){
+  const cfg = UNIDAD_CONFIGS[tipo];
+  const st = udState[tipo];
+  const wrap = document.getElementById(tipo+'_itemsWrap');
+  wrap.innerHTML = '';
+  st.itemState = {};
+  let catAnterior = null;
+  cfg.items.forEach((raw, idx)=>{
+    const esObjeto = typeof raw === 'object';
+    const nombre = esObjeto ? raw.aspecto : raw;
+    const categoria = esObjeto ? raw.categoria : null;
+    if(categoria && categoria !== catAnterior){
+      const catDiv = document.createElement('div');
+      catDiv.className = 'cat-title';
+      catDiv.textContent = categoria;
+      wrap.appendChild(catDiv);
+      catAnterior = categoria;
+    }
+    st.itemState['it'+idx] = null;
+    const div = document.createElement('div');
+    div.className = 'eqpitem';
+    div.dataset.item = nombre;
+    div.dataset.idx = idx;
+    div.innerHTML = `
+      <div class="ei-name">${nombre}</div>
+      ${cfg.itemCantidad ? `<input type="number" min="0" class="ud-cant" placeholder="Cantidad" style="margin-bottom:8px;max-width:110px;">` : ''}
+      <div class="pills">
+        ${cfg.estadoOpciones.map(v=>`<div class="pill" data-v="${v}">${v}</div>`).join('')}
+      </div>
+      <input type="text" class="bi-obs" placeholder="Observación (opcional)" style="margin-top:8px;">
+    `;
+    wrap.appendChild(div);
+    div.querySelectorAll('.pill').forEach(p=>{
+      p.addEventListener('click', ()=>{
+        div.querySelectorAll('.pill').forEach(x=>x.classList.remove('sel'));
+        p.classList.add('sel');
+        st.itemState['it'+idx] = p.dataset.v;
+      });
+    });
+  });
+}
+
+function udBuildAcciones(tipo){
+  const cfg = UNIDAD_CONFIGS[tipo];
+  if(!cfg.accionesMejora) return;
+  const wrap = document.getElementById(tipo+'_accionesWrap');
+  wrap.innerHTML = '';
+  for(let i=0;i<cfg.accionesMejora.max;i++){
+    const row = document.createElement('div');
+    row.className = 'accion-row';
+    row.dataset.idx = i;
+    row.innerHTML = `
+      <input type="text" class="ac-actividad" placeholder="Actividad a desarrollar">
+      <input type="text" class="ac-responsable" placeholder="Responsable">
+      <input type="date" class="ac-fecha">
+    `;
+    wrap.appendChild(row);
+  }
+}
+
+function udSetupPhoto(tipo){
+  const st = udState[tipo];
+  const btn = document.getElementById(tipo+'_fotoBtn');
+  const input = document.getElementById(tipo+'_fotoInput');
+  btn.addEventListener('click', ()=>input.click());
+  input.addEventListener('change', async ()=>{
+    const f = input.files[0];
+    if(!f) return;
+    btn.innerHTML = 'Procesando foto…';
+    const data = await comprimirFoto(f);
+    if(data){
+      st.fotoData = data;
+      btn.classList.add('has');
+      btn.innerHTML = `<img src="${data}"> Foto adjunta — toca para cambiar`;
+    }else{
+      btn.innerHTML = '📷 Adjuntar foto';
+      toast('No se pudo procesar la foto, intenta de nuevo');
+    }
+  });
+}
+
+function udEsMalo(estado){ return estado==='M' || estado==='NC'; }
+
+function udResetForm(tipo){
+  const cfg = UNIDAD_CONFIGS[tipo];
+  const st = udState[tipo];
+  document.getElementById(tipo+'_fIdentificador').value = '';
+  document.getElementById(tipo+'_fObs').value = '';
+  cfg.camposHeader.forEach(c=>{ document.getElementById(tipo+'_c_'+c.id).value=''; });
+  st.fotoData = null;
+  const btn = document.getElementById(tipo+'_fotoBtn');
+  btn.classList.remove('has');
+  btn.innerHTML = '📷 Adjuntar foto';
+  document.getElementById(tipo+'_fotoInput').value = '';
+  udBuildItems(tipo);
+  udBuildAcciones(tipo);
+  // las firmas de rol "responsable" persisten para la sesión; las demás se limpian
+  cfg.firmas.forEach(f=>{ if(f.key!=='responsable') st.sigPads[f.key].clear(); });
+}
+
+function udShowRecap(tipo, record){
+  const wrap = document.getElementById(tipo+'_recapWrap');
+  const malos = record.items.filter(i=>udEsMalo(i.estado)).length;
+  const chip = document.createElement('div');
+  chip.className = 'hist-item';
+  chip.innerHTML = `
+    <div class="hist-top">
+      <b>${record.identificador}</b>
+      <span class="badge ${malos>0?'M':'ok'}">${malos>0? malos+' en mal estado' : 'Todo bien'}</span>
+    </div>
+  `;
+  wrap.prepend(chip);
+}
+
+function udGuardar(tipo){
+  const cfg = UNIDAD_CONFIGS[tipo];
+  const st = udState[tipo];
+  const identificador = document.getElementById(tipo+'_fIdentificador').value.trim();
+  if(!identificador){ toast('Falta: '+cfg.idLabel); return; }
+
+  let responsable = '';
+  if(cfg.firmas.some(f=>f.key==='responsable')){
+    responsable = document.getElementById(tipo+'_fResponsable').value.trim();
+    if(!responsable){ toast('Falta el responsable de la inspección'); return; }
+  }
+
+  for(const f of cfg.firmas){
+    if(!st.sigPads[f.key].drawn){ toast('Falta: '+f.label); return; }
+  }
+
+  const items = [];
+  let faltaItem = false;
+  document.querySelectorAll('#screen-'+tipo+' .eqpitem').forEach(div=>{
+    const idx = Number(div.dataset.idx);
+    const val = st.itemState['it'+idx];
+    if(!val) faltaItem = true;
+    const item = {aspecto: div.dataset.item, estado: val || '', observacion: div.querySelector('.bi-obs').value.trim()};
+    if(cfg.itemCantidad) item.cantidad = div.querySelector('.ud-cant').value;
+    items.push(item);
+  });
+  if(faltaItem){ toast('Falta calificar algún aspecto del checklist'); return; }
+
+  let acciones = [];
+  if(cfg.accionesMejora){
+    const accWrap = document.getElementById(tipo+'_accionesWrap');
+    accWrap.querySelectorAll('.accion-row').forEach(row=>{
+      const actividad = row.querySelector('.ac-actividad').value.trim();
+      if(!actividad) return; // fila vacía, se omite
+      acciones.push({
+        actividad,
+        responsable: row.querySelector('.ac-responsable').value.trim(),
+        fecha: row.querySelector('.ac-fecha').value,
+      });
+    });
+  }
+
+  const campos = {};
+  cfg.camposHeader.forEach(c=>{ campos[c.id] = document.getElementById(tipo+'_c_'+c.id).value.trim(); });
+
+  const firmas_data = {};
+  cfg.firmas.forEach(f=>{ firmas_data[f.key] = st.sigPads[f.key].toDataURL(); });
+
+  const prevRec = st.editingId ? st.records.find(r=>r.id===st.editingId) : null;
+  const record = {
+    id: st.editingId || (tipo+'_'+Date.now()+'_'+Math.random().toString(36).slice(2,7)),
+    fecha: document.getElementById(tipo+'_fFecha').value,
+    identificador, responsable, campos, items, acciones,
+    observaciones: document.getElementById(tipo+'_fObs').value.trim(),
+    firmas_data,
+    foto_data: st.fotoData || null,
+    created_at: prevRec ? (prevRec.created_at || new Date().toISOString()) : new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  };
+
+  const wasEditing = !!st.editingId;
+  if(wasEditing){
+    const idx = st.records.findIndex(r=>r.id===st.editingId);
+    if(idx>=0) st.records[idx] = record; else st.records.push(record);
+    st.editingId = null;
+    document.getElementById(tipo+'_editBanner').classList.add('hidden');
+  }else{
+    st.records.unshift(record);
+  }
+  udSaveRecords(tipo);
+  if(!wasEditing) udShowRecap(tipo, record);
+  udResetForm(tipo);
+  toast(wasEditing ? 'Cambios guardados ✓' : 'Guardado en este celular ✓ — '+identificador);
+  udRenderHistorial(tipo);
+}
+
+function udEliminar(tipo, id){
+  if(!confirm('¿Eliminar esta inspección guardada en el celular? No se puede deshacer.')) return;
+  const st = udState[tipo];
+  st.records = st.records.filter(r=>r.id!==id);
+  udSaveRecords(tipo);
+  udRenderHistorial(tipo);
+  toast('Eliminado');
+}
+
+function udEditar(tipo, id){
+  const cfg = UNIDAD_CONFIGS[tipo];
+  const st = udState[tipo];
+  const d = st.records.find(r=>r.id===id);
+  if(!d){ toast('No se encontró el registro'); return; }
+  st.editingId = id;
+
+  document.getElementById(tipo+'_fFecha').value = d.fecha || '';
+  document.getElementById(tipo+'_fIdentificador').value = d.identificador || '';
+  cfg.camposHeader.forEach(c=>{ document.getElementById(tipo+'_c_'+c.id).value = (d.campos&&d.campos[c.id])||''; });
+  if(cfg.firmas.some(f=>f.key==='responsable')) document.getElementById(tipo+'_fResponsable').value = d.responsable || '';
+  document.getElementById(tipo+'_fObs').value = d.observaciones || '';
+
+  udBuildItems(tipo);
+  document.querySelectorAll('#screen-'+tipo+' .eqpitem').forEach(div=>{
+    const idx = Number(div.dataset.idx);
+    const match = d.items[idx];
+    if(!match) return;
+    if(cfg.itemCantidad) div.querySelector('.ud-cant').value = match.cantidad || '';
+    if(!match.estado) return;
+    st.itemState['it'+idx] = match.estado;
+    const p = div.querySelector(`.pill[data-v="${match.estado}"]`);
+    if(p) p.classList.add('sel');
+    div.querySelector('.bi-obs').value = match.observacion || '';
+  });
+
+  if(cfg.accionesMejora){
+    udBuildAcciones(tipo);
+    const accWrap = document.getElementById(tipo+'_accionesWrap');
+    (d.acciones||[]).forEach((a, i)=>{
+      const row = accWrap.querySelector(`.accion-row[data-idx="${i}"]`);
+      if(!row) return;
+      row.querySelector('.ac-actividad').value = a.actividad || '';
+      row.querySelector('.ac-responsable').value = a.responsable || '';
+      row.querySelector('.ac-fecha').value = a.fecha || '';
+    });
+  }
+
+  cfg.firmas.forEach(f=>{ st.sigPads[f.key].loadExisting((d.firmas_data||{})[f.key]); });
+
+  st.fotoData = d.foto_data || null;
+  const btn = document.getElementById(tipo+'_fotoBtn');
+  if(st.fotoData){ btn.classList.add('has'); btn.innerHTML = `<img src="${st.fotoData}"> Foto adjunta — toca para cambiar`; }
+  else{ btn.classList.remove('has'); btn.innerHTML = '📷 Adjuntar foto'; }
+
+  document.getElementById(tipo+'_editBanner').classList.remove('hidden');
+  document.getElementById('screen-'+tipo).querySelector('.tab[data-tab="nueva"]').click();
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+
+function udCancelarEdicion(tipo){
+  const st = udState[tipo];
+  st.editingId = null;
+  document.getElementById(tipo+'_editBanner').classList.add('hidden');
+  udResetForm(tipo);
+}
+
+function udRenderHistorial(tipo){
+  const st = udState[tipo];
+  const list = document.getElementById(tipo+'_histList');
+  const fFecha = document.getElementById(tipo+'_filFecha').value;
+  const fTexto = document.getElementById(tipo+'_filTexto').value.trim().toLowerCase();
+  let docs = [...st.records];
+  if(fFecha) docs = docs.filter(d=>d.fecha===fFecha);
+  if(fTexto) docs = docs.filter(d=> (d.identificador||'').toLowerCase().includes(fTexto));
+
+  if(docs.length===0){ list.innerHTML = '<div class="empty">No hay inspecciones guardadas en este celular.</div>'; return; }
+
+  const cfg = UNIDAD_CONFIGS[tipo];
+  list.innerHTML = docs.map(d=>{
+    const malos = d.items.filter(i=>udEsMalo(i.estado)).length;
+    const badgesItems = d.items.filter(i=>udEsMalo(i.estado)).map(i=>`<span class="badge M">${escapeHtml(i.aspecto)}</span>`).join('');
+    const firmasHtml = cfg.firmas.map(f=>`<div class="sig-thumb"><div class="lbl">${f.label.replace('Firma del ','').replace('Firma de la ','')}</div>${(d.firmas_data||{})[f.key]?`<img src="${d.firmas_data[f.key]}">`:'—'}</div>`).join('');
+    return `
+      <div class="hist-item" data-id="${d.id}">
+        <div class="hist-top">
+          <div>
+            <b>${d.identificador||'—'}</b>
+            <div class="hist-meta">${d.fecha||''}</div>
+          </div>
+          ${d.foto_data ? `<img class="foto-thumb" src="${d.foto_data}" alt="Foto">` : ''}
+          <span class="badge ${malos>0?'M':'ok'}">${malos>0? malos+' alerta(s)' : 'OK'}</span>
+        </div>
+        ${d.responsable ? `<div class="hist-meta">Responsable: ${d.responsable}</div>` : ''}
+        ${badgesItems ? `<div class="hist-badges">${badgesItems}</div>` : ''}
+        ${d.observaciones ? `<div class="hist-obs">"${escapeHtml(d.observaciones)}"</div>` : ''}
+        ${(d.acciones&&d.acciones.length>0) ? `<div class="hist-meta">📋 ${d.acciones.length} acción(es) de mejora registrada(s)</div>` : ''}
+        <div class="sig-thumbs">${firmasHtml}</div>
+        <div class="hist-actions">
+          <button class="btn-edit" data-editid="${d.id}" type="button">✏️ Editar</button>
+          <button class="btn-del" data-delid="${d.id}" type="button">🗑 Eliminar</button>
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  list.querySelectorAll('[data-editid]').forEach(btn=> btn.addEventListener('click', ()=> udEditar(tipo, btn.dataset.editid)));
+  list.querySelectorAll('[data-delid]').forEach(btn=> btn.addEventListener('click', ()=> udEliminar(tipo, btn.dataset.delid)));
+}
+
+async function udExportarExcel(tipo){
+  const cfg = UNIDAD_CONFIGS[tipo];
+  const st = udState[tipo];
+  if(st.records.length===0){ toast('No hay inspecciones guardadas en este celular para exportar'); return; }
+  const expBtn = document.getElementById(tipo+'_btnExport');
+  expBtn.disabled = true; expBtn.textContent = 'Generando Excel…';
+  try{
+    const wb = new ExcelJS.Workbook();
+    wb.creator = 'Inspección '+cfg.titulo;
+    const ordered = [...st.records].sort((a,b)=> (a.created_at||'').localeCompare(b.created_at||''));
+
+    const THIN = {style:'thin', color:{argb:'FFDEDBD1'}};
+    const BORDER = {top:THIN, bottom:THIN, left:THIN, right:THIN};
+    function styleHeader(row){
+      row.height = 28;
+      row.eachCell(c=>{
+        c.font = {bold:true, color:{argb:'FF1B2A4A'}, size:11};
+        c.fill = {type:'pattern', pattern:'solid', fgColor:{argb:'FFFCE9B9'}};
+        c.alignment = {vertical:'middle', horizontal:'center', wrapText:true};
+        c.border = BORDER;
+      });
+    }
+    function styleBody(ws){
+      for(let r=2;r<=ws.rowCount;r++){
+        ws.getRow(r).eachCell({includeEmpty:true}, c=>{
+          c.border = BORDER;
+          c.alignment = {vertical:'middle', wrapText:true};
+          if(r%2===0) c.fill = c.fill || {type:'pattern', pattern:'solid', fgColor:{argb:'FFF7F5F0'}};
+        });
+      }
+    }
+
+    const wsR = wb.addWorksheet('Resumen', {properties:{tabColor:{argb:'FF3D7A4B'}}, views:[{state:'frozen', ySplit:1}]});
+    const campoCols = cfg.camposHeader.map(c=>({header:c.label, key:'c_'+c.id, width:16}));
+    const firmaCols = cfg.firmas.map(f=>({header:f.label, width:18}));
+    wsR.columns = [
+      {header:'Fecha', key:'fecha', width:12},
+      {header:cfg.idLabel, key:'identificador', width:20},
+      ...campoCols,
+      ...(cfg.firmas.some(f=>f.key==='responsable') ? [{header:'Responsable', key:'responsable', width:20}] : []),
+      {header:'Malos', key:'malos', width:9},
+      {header:'Observaciones', key:'obs', width:30},
+      ...firmaCols,
+      {header:'Foto', width:14},
+    ];
+    const colFirmaStart = 2 + campoCols.length + (cfg.firmas.some(f=>f.key==='responsable')?1:0) + 2 + 1;
+    const colFoto = colFirmaStart + cfg.firmas.length;
+    const colMalos = 2 + campoCols.length + (cfg.firmas.some(f=>f.key==='responsable')?1:0) + 1;
+
+    ordered.forEach(d=>{
+      const row = {fecha:d.fecha||'', identificador:d.identificador||'',
+        malos: d.items.filter(i=>udEsMalo(i.estado)).length, obs: d.observaciones||''};
+      if(cfg.firmas.some(f=>f.key==='responsable')) row.responsable = d.responsable||'';
+      cfg.camposHeader.forEach(c=>{ row['c_'+c.id] = (d.campos&&d.campos[c.id])||''; });
+      wsR.addRow(row);
+    });
+    styleHeader(wsR.getRow(1));
+    styleBody(wsR);
+    for(let r=2;r<=wsR.rowCount;r++){
+      const cell = wsR.getRow(r).getCell(colMalos);
+      if(Number(cell.value)>0){ cell.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFFBE4E1'}}; cell.font={bold:true,color:{argb:'FFB23A2E'}}; }
+    }
+    wsR.autoFilter = {from:{row:1,column:1}, to:{row:1,column:wsR.columns.length}};
+    ordered.forEach((d,i)=>{
+      const rowIdx = i+2;
+      wsR.getRow(rowIdx).height = 46;
+      cfg.firmas.forEach((f, fi)=>{
+        const data = (d.firmas_data||{})[f.key];
+        if(!data) return;
+        try{
+          const {buffer, extension} = dataURLtoBuffer(data);
+          const imgId = wb.addImage({buffer, extension});
+          wsR.addImage(imgId, {tl:{col:colFirmaStart+fi-0.95, row:rowIdx-0.95}, ext:{width:90, height:40}});
+        }catch(e){}
+      });
+      if(d.foto_data){
+        try{
+          const {buffer, extension} = dataURLtoBuffer(d.foto_data);
+          const imgId = wb.addImage({buffer, extension});
+          wsR.addImage(imgId, {tl:{col:colFoto-0.95, row:rowIdx-0.95}, ext:{width:50, height:40}});
+        }catch(e){}
+      }
+    });
+
+    const wsD = wb.addWorksheet('Checklist', {properties:{tabColor:{argb:'FFD98E2B'}}, views:[{state:'frozen', ySplit:1}]});
+    wsD.columns = [
+      {header:'Fecha', key:'fecha', width:12}, {header:cfg.idLabel, key:'identificador', width:20},
+      {header:'Aspecto', key:'aspecto', width:46},
+      ...(cfg.itemCantidad ? [{header:'Cantidad', key:'cantidad', width:11}] : []),
+      {header:'Estado', key:'estado', width:11},
+      {header:'Observación', key:'obs', width:34},
+    ];
+    ordered.forEach(d=>{
+      d.items.forEach(it=>{
+        const row = {fecha:d.fecha||'', identificador:d.identificador||'', aspecto:it.aspecto,
+          estado: UD_ESTADO_LABEL[it.estado]||'', obs:it.observacion||''};
+        if(cfg.itemCantidad) row.cantidad = it.cantidad||'';
+        wsD.addRow(row);
+      });
+    });
+    styleHeader(wsD.getRow(1));
+    styleBody(wsD);
+    const colEstado = cfg.itemCantidad ? 5 : 4;
+    for(let r=2;r<=wsD.rowCount;r++){
+      const cell = wsD.getRow(r).getCell(colEstado);
+      if(cell.value==='Malo' || cell.value==='No cumple'){ cell.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFFBE4E1'}}; cell.font={bold:true,color:{argb:'FFB23A2E'}}; }
+      else if(cell.value==='Bueno' || cell.value==='Cumple' || cell.value==='Sí'){ cell.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFE4F1E5'}}; cell.font={bold:true,color:{argb:'FF3D7A4B'}}; }
+    }
+    wsD.autoFilter = {from:{row:1,column:1}, to:{row:1,column:wsD.columns.length}};
+
+    if(cfg.accionesMejora){
+      const todasAcciones = [];
+      ordered.forEach(d=>{ (d.acciones||[]).forEach(a=> todasAcciones.push({d, a})); });
+      if(todasAcciones.length>0){
+        const wsAc = wb.addWorksheet('Acciones de mejora', {properties:{tabColor:{argb:'FF2B6FD9'}}, views:[{state:'frozen', ySplit:1}]});
+        wsAc.columns = [
+          {header:'Fecha', key:'fecha', width:12}, {header:cfg.idLabel, key:'identificador', width:20},
+          {header:'Actividad a desarrollar', key:'actividad', width:40},
+          {header:'Responsable', key:'responsable', width:20}, {header:'Fecha compromiso', key:'fc', width:14},
+        ];
+        todasAcciones.forEach(({d,a})=>{
+          wsAc.addRow({fecha:d.fecha||'', identificador:d.identificador||'', actividad:a.actividad||'', responsable:a.responsable||'', fc:a.fecha||''});
+        });
+        styleHeader(wsAc.getRow(1));
+        styleBody(wsAc);
+        wsAc.autoFilter = {from:{row:1,column:1}, to:{row:1,column:wsAc.columns.length}};
+      }
+    }
+
+    const buf = await wb.xlsx.writeBuffer();
+    const blob = new Blob([buf], {type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+    const sizeMB = (blob.size/1024/1024).toFixed(1);
+    descargarBlobDirecto(blob, 'inspecciones_'+tipo+'.xlsx');
+    toast('Descargando… ('+sizeMB+' MB)');
+  }catch(e){
+    toast('No se pudo generar el Excel');
+    console.error(e);
+  }finally{
+    expBtn.disabled = false; expBtn.textContent = 'Exportar a Excel';
+  }
+}
+
+function udInit(tipo){
+  const cfg = UNIDAD_CONFIGS[tipo];
+  udState[tipo] = {records:[], editingId:null, sigPads:{}, fotoData:null, itemState:{}};
+  const screen = document.getElementById('screen-'+tipo);
+  screen.innerHTML = udRenderScreenHtml(tipo, cfg);
+  document.getElementById(tipo+'_fFecha').value = new Date().toISOString().slice(0,10);
+  udLoadRecords(tipo);
+  udBuildItems(tipo);
+  udBuildAcciones(tipo);
+  cfg.firmas.forEach(f=>{
+    createSignaturePad(udState[tipo].sigPads, f.key, tipo+'_sig_'+f.key, tipo+'_sigClear_'+f.key, null);
+  });
+  udSetupPhoto(tipo);
+  setupTabs(screen, ()=>udRenderHistorial(tipo));
+  document.getElementById(tipo+'_btnGuardar').addEventListener('click', ()=>udGuardar(tipo));
+  document.getElementById(tipo+'_btnCancelarEdicion').addEventListener('click', ()=>udCancelarEdicion(tipo));
+  document.getElementById(tipo+'_btnExport').addEventListener('click', ()=>udExportarExcel(tipo));
+  document.getElementById(tipo+'_filFecha').addEventListener('change', ()=>udRenderHistorial(tipo));
+  document.getElementById(tipo+'_filTexto').addEventListener('input', ()=>udRenderHistorial(tipo));
+  udSaveRecords(tipo);
+  udRenderHistorial(tipo);
+}
+
+
 // =========================== ARRANQUE ===========================
 (function(){
   initEpp();
@@ -3819,6 +4835,10 @@ function eqpInit(tipo){
   setupTabs(document.getElementById('screen-bot'), botRenderHistorial);
   setupTabs(document.getElementById('screen-ext'), extRenderHistorial);
   ['guadana','bombaespalda','bombainsufladora','motosierra'].forEach(eqpInit);
+  ['alturas'].forEach(eqpInit);
+  ['zorrillos','vagones','tractores','herramientas'].forEach(udInit);
+  ['locativa','rotulos','kitderrames'].forEach(udInit);
+  ['vehiculo','motos','bus'].forEach(udInit);
   setupHomeNav();
   mostrarPantalla('screen-home');
   if('serviceWorker' in navigator){
