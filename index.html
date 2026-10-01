@@ -375,9 +375,14 @@
   .pill[data-v="M"].sel{background:var(--bad-bg);border-color:var(--bad);color:var(--bad);}
   .pill[data-v="R"].sel{background:var(--warn-bg);border-color:var(--warn);color:var(--warn);}
   .pill[data-v="NA"].sel{background:var(--na-bg);border-color:var(--na);color:var(--na);}
+  .pill[data-v="NT"].sel{background:var(--warn-bg);border-color:var(--warn);color:var(--warn);}
 
   .estitem{border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin-bottom:8px;}
   .estitem .ei-name{font-size:13.5px;font-weight:600;margin-bottom:8px;}
+  .eqpitem{border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin-bottom:8px;}
+  .eqpitem .ei-name{font-size:13.5px;font-weight:600;margin-bottom:8px;}
+  .eqppreg{border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin-bottom:8px;}
+  .eqppreg .ci-q{font-size:13px;font-weight:600;margin-bottom:8px;}
 
   .btn{display:block;width:100%;text-align:center;padding:13px;border-radius:12px;border:none;font-size:15px;font-weight:700;cursor:pointer;}
   .btn-primary{background:var(--primary);color:var(--primary-ink);}
@@ -497,9 +502,45 @@
             <span class="home-code">FT-SST-007</span>
           </span>
         </button>
+        <button class="home-card" data-abrir="guadana" type="button">
+          <span class="home-icon" style="background:var(--good-bg);color:var(--good);">🌿</span>
+          <span class="home-body">
+            <span class="home-title">Guadaña</span>
+            <span class="home-desc">Equipo, cuchilla y aspectos del trabajador</span>
+            <span class="home-code">FT-SST-009</span>
+          </span>
+        </button>
+        <button class="home-card" data-abrir="bombaespalda" type="button">
+          <span class="home-icon" style="background:var(--bad-bg);color:var(--bad);">🎒</span>
+          <span class="home-body">
+            <span class="home-title">Bomba de espalda</span>
+            <span class="home-desc">Fumigadora manual — equipo y trabajador</span>
+            <span class="home-code">SST-FT-010</span>
+          </span>
+        </button>
+        <button class="home-card" data-abrir="bombainsufladora" type="button">
+          <span class="home-icon" style="background:var(--warn-bg);color:var(--warn);">💨</span>
+          <span class="home-body">
+            <span class="home-title">Bomba insufladora</span>
+            <span class="home-desc">Equipo de aplicación de polvo</span>
+            <span class="home-code">Sin código oficial</span>
+          </span>
+        </button>
+        <button class="home-card" data-abrir="motosierra" type="button">
+          <span class="home-icon" style="background:var(--na-bg);color:var(--na);">🪚</span>
+          <span class="home-body">
+            <span class="home-title">Motosierra</span>
+            <span class="home-desc">Motor, sistema de corte y trabajador</span>
+            <span class="home-code">FT-SST-014</span>
+          </span>
+        </button>
       </div>
     </div>
   </div>
+  <div id="screen-guadana" class="screen hidden"></div>
+  <div id="screen-bombaespalda" class="screen hidden"></div>
+  <div id="screen-bombainsufladora" class="screen hidden"></div>
+  <div id="screen-motosierra" class="screen hidden"></div>
   <div id="screen-epp" class="screen hidden">
 <div class="app">
 
@@ -3117,6 +3158,658 @@ function initExt(){
 }
 
 
+
+// =========================== MÓDULO GENÉRICO: EQUIPO + TRABAJADOR ===========================
+// Un solo motor para Guadaña, Bomba de espalda, Bomba insufladora, Motosierra (y cualquier
+// otro equipo con el mismo patrón: checklist de piezas B/M/NT + preguntas Sí/No al
+// trabajador + firma trabajador y firma responsable). Agregar un equipo nuevo de este tipo
+// es solo sumar una entrada a EQUIPO_CONFIGS — no hay que repetir código.
+
+const EQUIPO_CONFIGS = {
+  guadana: {
+    titulo: 'Guadaña', codigo: 'FT-SST-009',
+    subtitulo: 'Equipo, cuchilla y aspectos del trabajador',
+    campos: [],
+    items: [
+      'TANQUE COMBUSTIBLE - Fuga de combustible',
+      'TANQUE COMBUSTIBLE - Tapa de tanque',
+      'MOTOR - Sistema eléctrico bujía',
+      'MOTOR - Sistema de encendido',
+      'MOTOR - Exhosto',
+      'CARBURADOR - Tornillos ajustados',
+      'CHASIS - EJE TRANSMISIÓN - Sistema de soporte completo',
+      'CHASIS - EJE TRANSMISIÓN - Sistemas de anclaje de motor',
+      'MANUBRIO - Funcional',
+      'SOPORTE ANTI VIBRACIÓN - Tornillos ajustados',
+      'ACELERADOR, BOTÓN DE DETENIDO - Funcional',
+      'GATILLO DEL ACELERADOR - Funcional',
+      'CAJA DE ENGRANAJE - Eje de rotación ajustado',
+      'CAJA DE ENGRANAJE - Sistema de acople funcional y en buen estado',
+      'PROTECTOR - Funcional, ajustado',
+      'CUCHILLA - En buen estado, sin fisuras ni abolladuras, afilada',
+      'PALANCA DE ARRANQUE - Tornillo ajustado',
+      'OTROS ASPECTOS - Arnés en buen estado y funcional, el trabajador lo usa',
+      'OTROS ASPECTOS - Lima o piedra lima funcional y en buen estado, suministrada por la empresa',
+    ],
+    preguntas: [
+      '¿El trabajador recibió instrucción en el procedimiento de la labor?',
+      '¿Conoce los peligros de la actividad, el producto aplicado?',
+      '¿El combustible lo transporta separado de la comida, bebida y ropa de cambio?',
+      '¿Cuenta y usa los EPP completos y de manera correcta?',
+      '¿El recipiente para transporte de combustible es adecuado (no es envase que haya contenido bebidas de consumo humano o de un producto agroquímico) y no presenta fugas?',
+    ],
+  },
+  bombaespalda: {
+    titulo: 'Bomba de espalda', codigo: 'SST-FT-010',
+    subtitulo: 'Fumigadora manual — equipo y trabajador',
+    campos: [
+      {id:'producto', label:'Producto agrícola usado'},
+      {id:'dosificador', label:'Dosificador usado'},
+      {id:'marca', label:'Marca bomba'},
+      {id:'modelo', label:'Modelo bomba'},
+      {id:'capacidad', label:'Capacidad de la bomba'},
+    ],
+    items: ['BOMBA','PALANCA DE LA BOMBA','BOQUILLA','LANZA','VÁLVULA','MANGUERA','TANQUE','TAPA','ARNÉS, CORREAS','ENVASE TRANSPORTE PRODUCTO','DOSIFICADOR'],
+    preguntas: [
+      '¿El trabajador recibió instrucción en el procedimiento de la labor?',
+      '¿Conoce los peligros de la actividad, el producto aplicado?',
+      '¿Cuenta y usa los EPP completos y de manera correcta?',
+      '¿Cuenta con el certificado del SENA para manipular plaguicidas?',
+      '¿Transporte de alimentos y bebidas separado de los EPP, ropa y equipo de trabajo?',
+    ],
+  },
+  bombainsufladora: {
+    titulo: 'Bomba insufladora', codigo: '',
+    subtitulo: 'Equipo de aplicación de polvo',
+    campos: [
+      {id:'producto', label:'Producto agrícola usado'},
+      {id:'dosificador', label:'Dosificador usado'},
+      {id:'marca', label:'Marca bomba'},
+      {id:'modelo', label:'Modelo bomba'},
+      {id:'capacidad', label:'Capacidad de la bomba'},
+    ],
+    items: ['EMPUÑADURA SENCILLA','TAPA INSUFLADORA','PISTÓN INSUFLADORA','JUNTA PRINCIPAL INSUFLADORA','TUERCA DE SEGURIDAD','CÁMARA INSUFLADORA','PISTÓN INSUFLADORA (2)','VÁLVULA DE NITRILO','SELLO SUPERIOR INSUFLADORA','EMBUDO INSUFLADORA','ACOPLE INSUFLADORA','SELLO INFERIOR','RECIPIENTE PARA POLVO INSUFLADORA','REMACHE SEMITUBULAR','SOPORTE INSUFLADORA','MANGUERA INSUFLADORA','BOQUILLA ASPERSORA INSUFLADORA'],
+    preguntas: [
+      '¿El trabajador recibió instrucción en el procedimiento de la labor?',
+      '¿Conoce los peligros de la actividad, el producto aplicado?',
+      '¿Cuenta y usa los EPP completos y de manera correcta?',
+      '¿Cuenta con el certificado del SENA para manipular plaguicidas?',
+      '¿Transporte de alimentos y bebidas separado de los EPP, ropa y equipo de trabajo?',
+    ],
+  },
+  motosierra: {
+    titulo: 'Motosierra', codigo: 'FT-SST-014',
+    subtitulo: 'Motor, sistema de corte y trabajador',
+    campos: [],
+    items: [
+      'MOTOR - Fugas de combustible','MOTOR - Tapa de tanque','MOTOR - Sistema eléctrico bujía',
+      'MOTOR - Exhosto con guarda y silenciador','MOTOR - Sistema de encendido',
+      'CHASIS - Sistema de soporte completo',
+      'SISTEMA DE OPERACIÓN - Embrague funciona','SISTEMA DE OPERACIÓN - Acelerador y ralentí calibrados','SISTEMA DE OPERACIÓN - Manubrio firme',
+      'SISTEMA DE CORTE - Guarda','SISTEMA DE CORTE - Se inspeccionó la cadena','SISTEMA DE CORTE - Se inspeccionó la espada',
+      'SISTEMA DE CORTE - Está correctamente afilado a mano','SISTEMA DE CORTE - No tiene grietas o fisuras',
+      'SISTEMA DE CORTE - Se ajusta adecuadamente a la espada','SISTEMA DE CORTE - El sistema de acople de la cadena funciona adecuadamente',
+    ],
+    preguntas: [
+      '¿El trabajador recibió instrucción en el procedimiento de la labor?',
+      '¿Conoce los peligros de la actividad, el producto aplicado?',
+      '¿El combustible lo transporta separado de la comida, bebida y ropa de cambio?',
+      '¿Cuenta y usa los EPP completos y de manera correcta?',
+      '¿El recipiente para transporte de combustible es adecuado (no es envase que haya contenido bebidas de consumo humano o de un producto agroquímico) y no presenta fugas?',
+      '¿Se inspeccionó el área y se removieron objetos peligrosos para la actividad o se señalizaron?',
+    ],
+  },
+};
+
+const eqpState = {};
+
+function eqpRenderScreenHtml(tipo, cfg){
+  const camposHtml = cfg.campos.map(c=>`
+      <label>${c.label}</label>
+      <input type="text" id="${tipo}_c_${c.id}">`).join('');
+  return `
+    <div class="local-note">📱 Cada inspección se guarda en este celular. Exporta a Excel desde el Historial.</div>
+    <header class="top">
+      <button class="back-btn" type="button" data-volver>← Menú</button>
+      <h1>${cfg.titulo}${cfg.codigo ? ' · '+cfg.codigo : ''}</h1>
+      <p>${cfg.subtitulo}</p>
+      <div class="tabs">
+        <button class="tab active" data-tab="nueva">Nueva inspección</button>
+        <button class="tab" data-tab="historial">Historial <span id="${tipo}_histCount" class="count-badge hidden">0</span></button>
+      </div>
+    </header>
+
+    <div id="${tipo}_tab-nueva" class="section" data-tabpanel="nueva">
+      <div id="${tipo}_editBanner" class="edit-banner hidden">
+        ✏️ Editando una inspección guardada
+        <button type="button" id="${tipo}_btnCancelarEdicion">Cancelar</button>
+      </div>
+
+      <div class="card">
+        <h2>Datos de la inspección</h2>
+        <label>Fecha</label>
+        <input type="date" id="${tipo}_fFecha">
+        <label>Nombre del trabajador</label>
+        <input type="text" id="${tipo}_fTrabajador" placeholder="Nombre completo">
+        <label>Labor</label>
+        <input type="text" id="${tipo}_fLabor" placeholder="Ej: Guadañado zona 3">
+        <label>Responsable de la inspección</label>
+        <input type="text" id="${tipo}_fResponsable" placeholder="Nombre completo">${camposHtml}
+      </div>
+
+      <div class="card">
+        <h2>Revisión del equipo<small>B = Bueno · M = Malo · NT = No tiene</small></h2>
+        <div id="${tipo}_itemsWrap"></div>
+      </div>
+
+      <div class="card">
+        <h2>Aspectos del trabajador</h2>
+        <div id="${tipo}_pregWrap"></div>
+      </div>
+
+      <div class="card">
+        <h2>Observaciones</h2>
+        <textarea id="${tipo}_fObs" placeholder="Observaciones generales"></textarea>
+      </div>
+
+      <div class="card">
+        <h2>Foto<small>Opcional</small></h2>
+        <input type="file" id="${tipo}_fotoInput" accept="image/*" capture="environment">
+        <div class="photo-btn" id="${tipo}_fotoBtn">📷 Adjuntar foto</div>
+      </div>
+
+      <div class="card">
+        <h2>Firma del trabajador</h2>
+        <div class="sig-wrap"><canvas id="${tipo}_sig_trab" class="sigcanvas"></canvas></div>
+        <div class="sig-actions"><span></span><button id="${tipo}_sigClearTrab" type="button">Limpiar firma</button></div>
+      </div>
+
+      <div class="card">
+        <h2>Firma del responsable de la inspección</h2>
+        <div class="sig-wrap"><canvas id="${tipo}_sig_resp" class="sigcanvas"></canvas></div>
+        <div class="sig-actions"><span></span><button id="${tipo}_sigClearResp" type="button">Limpiar firma</button></div>
+        <p class="sig-note">Se guarda para toda la sesión — solo hace falta firmar una vez, salvo que la limpies.</p>
+      </div>
+
+      <button class="btn btn-primary" id="${tipo}_btnGuardar">Guardar y agregar otra inspección</button>
+      <div id="${tipo}_recapWrap" style="margin-top:14px;"></div>
+    </div>
+
+    <div id="${tipo}_tab-historial" class="section hidden" data-tabpanel="historial">
+      <div class="filters">
+        <input type="date" id="${tipo}_filFecha">
+        <input type="text" id="${tipo}_filTexto" placeholder="Buscar trabajador o labor…">
+      </div>
+      <button class="btn btn-ghost" id="${tipo}_btnExport" style="margin-bottom:12px;">Exportar a Excel</button>
+      <div id="${tipo}_histList"></div>
+    </div>
+  `;
+}
+
+function eqpStorageKey(tipo){ return 'eqp_'+tipo+'_records_v1'; }
+
+function eqpLoadRecords(tipo){
+  try{ eqpState[tipo].records = JSON.parse(localStorage.getItem(eqpStorageKey(tipo)) || '[]'); }
+  catch(e){ eqpState[tipo].records = []; }
+}
+function eqpSaveRecords(tipo){
+  const st = eqpState[tipo];
+  try{ localStorage.setItem(eqpStorageKey(tipo), JSON.stringify(st.records)); }
+  catch(e){ toast('⚠️ No se pudo guardar — memoria del celular llena'); }
+  const c = document.getElementById(tipo+'_histCount');
+  c.textContent = st.records.length;
+  c.classList.toggle('hidden', st.records.length===0);
+}
+
+function eqpBuildItems(tipo){
+  const cfg = EQUIPO_CONFIGS[tipo];
+  const st = eqpState[tipo];
+  const wrap = document.getElementById(tipo+'_itemsWrap');
+  wrap.innerHTML = '';
+  st.itemState = {};
+  cfg.items.forEach((nombre, idx)=>{
+    st.itemState['it'+idx] = null;
+    const div = document.createElement('div');
+    div.className = 'eqpitem';
+    div.dataset.item = nombre;
+    div.dataset.idx = idx;
+    div.innerHTML = `
+      <div class="ei-name">${nombre}</div>
+      <div class="pills">
+        ${['B','M','NT'].map(v=>`<div class="pill" data-v="${v}">${v}</div>`).join('')}
+      </div>
+      <input type="text" class="bi-obs" placeholder="Observación (opcional)" style="margin-top:8px;">
+    `;
+    wrap.appendChild(div);
+    div.querySelectorAll('.pill').forEach(p=>{
+      p.addEventListener('click', ()=>{
+        div.querySelectorAll('.pill').forEach(x=>x.classList.remove('sel'));
+        p.classList.add('sel');
+        st.itemState['it'+idx] = p.dataset.v;
+      });
+    });
+  });
+}
+
+function eqpBuildPreguntas(tipo){
+  const cfg = EQUIPO_CONFIGS[tipo];
+  const st = eqpState[tipo];
+  const wrap = document.getElementById(tipo+'_pregWrap');
+  wrap.innerHTML = '';
+  st.preguntaState = {};
+  cfg.preguntas.forEach((preg, idx)=>{
+    st.preguntaState['pq'+idx] = null;
+    const div = document.createElement('div');
+    div.className = 'eqppreg';
+    div.dataset.pregunta = preg;
+    div.dataset.idx = idx;
+    div.innerHTML = `
+      <div class="ci-q">${preg}</div>
+      <div class="pills">
+        <div class="pill" data-v="SI">Sí</div>
+        <div class="pill" data-v="NO">No</div>
+      </div>
+    `;
+    wrap.appendChild(div);
+    div.querySelectorAll('.pill').forEach(p=>{
+      p.addEventListener('click', ()=>{
+        div.querySelectorAll('.pill').forEach(x=>x.classList.remove('sel'));
+        p.classList.add('sel');
+        st.preguntaState['pq'+idx] = p.dataset.v;
+      });
+    });
+  });
+}
+
+function eqpSetupPhoto(tipo){
+  const st = eqpState[tipo];
+  const btn = document.getElementById(tipo+'_fotoBtn');
+  const input = document.getElementById(tipo+'_fotoInput');
+  btn.addEventListener('click', ()=>input.click());
+  input.addEventListener('change', async ()=>{
+    const f = input.files[0];
+    if(!f) return;
+    btn.innerHTML = 'Procesando foto…';
+    const data = await comprimirFoto(f);
+    if(data){
+      st.fotoData = data;
+      btn.classList.add('has');
+      btn.innerHTML = `<img src="${data}"> Foto adjunta — toca para cambiar`;
+    }else{
+      btn.innerHTML = '📷 Adjuntar foto';
+      toast('No se pudo procesar la foto, intenta de nuevo');
+    }
+  });
+}
+
+function eqpResetForm(tipo){
+  const st = eqpState[tipo];
+  document.getElementById(tipo+'_fTrabajador').value = '';
+  document.getElementById(tipo+'_fLabor').value = '';
+  document.getElementById(tipo+'_fObs').value = '';
+  EQUIPO_CONFIGS[tipo].campos.forEach(c=>{ document.getElementById(tipo+'_c_'+c.id).value=''; });
+  st.fotoData = null;
+  const btn = document.getElementById(tipo+'_fotoBtn');
+  btn.classList.remove('has');
+  btn.innerHTML = '📷 Adjuntar foto';
+  document.getElementById(tipo+'_fotoInput').value = '';
+  eqpBuildItems(tipo);
+  eqpBuildPreguntas(tipo);
+  st.sigPads.trabajador.clear();
+  // la firma del responsable NO se limpia: puede inspeccionar varios equipos seguidos
+}
+
+function eqpShowRecap(tipo, record){
+  const wrap = document.getElementById(tipo+'_recapWrap');
+  const malos = record.items.filter(i=>i.estado==='M').length;
+  const chip = document.createElement('div');
+  chip.className = 'hist-item';
+  chip.innerHTML = `
+    <div class="hist-top">
+      <b>${record.trabajador}</b>
+      <span class="badge ${malos>0?'M':'ok'}">${malos>0? malos+' en mal estado' : 'Todo bien'}</span>
+    </div>
+    <div class="hist-meta">${record.labor||''}</div>
+  `;
+  wrap.prepend(chip);
+}
+
+function eqpGuardar(tipo){
+  const cfg = EQUIPO_CONFIGS[tipo];
+  const st = eqpState[tipo];
+  const trabajador = document.getElementById(tipo+'_fTrabajador').value.trim();
+  const labor = document.getElementById(tipo+'_fLabor').value.trim();
+  const responsable = document.getElementById(tipo+'_fResponsable').value.trim();
+
+  if(!trabajador){ toast('Falta el nombre del trabajador'); return; }
+  if(!responsable){ toast('Falta el responsable de la inspección'); return; }
+  if(!st.sigPads.trabajador.drawn){ toast('Falta la firma del trabajador'); return; }
+  if(!st.sigPads.responsable.drawn){ toast('Falta la firma del responsable'); return; }
+
+  const items = [];
+  let faltaItem = false;
+  document.querySelectorAll('#screen-'+tipo+' .eqpitem').forEach(div=>{
+    const idx = Number(div.dataset.idx);
+    const val = st.itemState['it'+idx];
+    if(!val) faltaItem = true;
+    items.push({aspecto: div.dataset.item, estado: val || '', observacion: div.querySelector('.bi-obs').value.trim()});
+  });
+  if(faltaItem){ toast('Falta calificar algún aspecto del equipo'); return; }
+
+  const preguntas = [];
+  let faltaPreg = false;
+  document.querySelectorAll('#screen-'+tipo+' .eqppreg').forEach(div=>{
+    const idx = Number(div.dataset.idx);
+    const val = st.preguntaState['pq'+idx];
+    if(!val) faltaPreg = true;
+    preguntas.push({pregunta: div.dataset.pregunta, respuesta: val || ''});
+  });
+  if(faltaPreg){ toast('Falta responder alguna pregunta del trabajador'); return; }
+
+  const campos = {};
+  cfg.campos.forEach(c=>{ campos[c.id] = document.getElementById(tipo+'_c_'+c.id).value.trim(); });
+
+  const prevRec = st.editingId ? st.records.find(r=>r.id===st.editingId) : null;
+  const record = {
+    id: st.editingId || (tipo+'_'+Date.now()+'_'+Math.random().toString(36).slice(2,7)),
+    fecha: document.getElementById(tipo+'_fFecha').value,
+    trabajador, labor, responsable, campos, items, preguntas,
+    observaciones: document.getElementById(tipo+'_fObs').value.trim(),
+    firma_trabajador_data: st.sigPads.trabajador.toDataURL(),
+    firma_responsable_data: st.sigPads.responsable.toDataURL(),
+    foto_data: st.fotoData || null,
+    created_at: prevRec ? (prevRec.created_at || new Date().toISOString()) : new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  };
+
+  const wasEditing = !!st.editingId;
+  if(wasEditing){
+    const idx = st.records.findIndex(r=>r.id===st.editingId);
+    if(idx>=0) st.records[idx] = record; else st.records.push(record);
+    st.editingId = null;
+    document.getElementById(tipo+'_editBanner').classList.add('hidden');
+  }else{
+    st.records.unshift(record);
+  }
+  eqpSaveRecords(tipo);
+  if(!wasEditing) eqpShowRecap(tipo, record);
+  eqpResetForm(tipo);
+  toast(wasEditing ? 'Cambios guardados ✓' : 'Guardado en este celular ✓ — '+trabajador);
+  eqpRenderHistorial(tipo);
+}
+
+function eqpEliminar(tipo, id){
+  if(!confirm('¿Eliminar esta inspección guardada en el celular? No se puede deshacer.')) return;
+  const st = eqpState[tipo];
+  st.records = st.records.filter(r=>r.id!==id);
+  eqpSaveRecords(tipo);
+  eqpRenderHistorial(tipo);
+  toast('Eliminado');
+}
+
+function eqpEditar(tipo, id){
+  const st = eqpState[tipo];
+  const d = st.records.find(r=>r.id===id);
+  if(!d){ toast('No se encontró el registro'); return; }
+  st.editingId = id;
+
+  document.getElementById(tipo+'_fFecha').value = d.fecha || '';
+  document.getElementById(tipo+'_fTrabajador').value = d.trabajador || '';
+  document.getElementById(tipo+'_fLabor').value = d.labor || '';
+  document.getElementById(tipo+'_fResponsable').value = d.responsable || '';
+  EQUIPO_CONFIGS[tipo].campos.forEach(c=>{ document.getElementById(tipo+'_c_'+c.id).value = (d.campos&&d.campos[c.id])||''; });
+  document.getElementById(tipo+'_fObs').value = d.observaciones || '';
+
+  eqpBuildItems(tipo);
+  document.querySelectorAll('#screen-'+tipo+' .eqpitem').forEach(div=>{
+    const idx = Number(div.dataset.idx);
+    const match = d.items[idx];
+    if(!match || !match.estado) return;
+    st.itemState['it'+idx] = match.estado;
+    const p = div.querySelector(`.pill[data-v="${match.estado}"]`);
+    if(p) p.classList.add('sel');
+    div.querySelector('.bi-obs').value = match.observacion || '';
+  });
+
+  eqpBuildPreguntas(tipo);
+  document.querySelectorAll('#screen-'+tipo+' .eqppreg').forEach(div=>{
+    const idx = Number(div.dataset.idx);
+    const match = d.preguntas[idx];
+    if(!match || !match.respuesta) return;
+    st.preguntaState['pq'+idx] = match.respuesta;
+    const p = div.querySelector(`.pill[data-v="${match.respuesta}"]`);
+    if(p) p.classList.add('sel');
+  });
+
+  st.sigPads.trabajador.loadExisting(d.firma_trabajador_data);
+  st.sigPads.responsable.loadExisting(d.firma_responsable_data);
+
+  st.fotoData = d.foto_data || null;
+  const btn = document.getElementById(tipo+'_fotoBtn');
+  if(st.fotoData){ btn.classList.add('has'); btn.innerHTML = `<img src="${st.fotoData}"> Foto adjunta — toca para cambiar`; }
+  else{ btn.classList.remove('has'); btn.innerHTML = '📷 Adjuntar foto'; }
+
+  document.getElementById(tipo+'_editBanner').classList.remove('hidden');
+  document.getElementById('screen-'+tipo).querySelector('.tab[data-tab="nueva"]').click();
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+
+function eqpCancelarEdicion(tipo){
+  const st = eqpState[tipo];
+  st.editingId = null;
+  document.getElementById(tipo+'_editBanner').classList.add('hidden');
+  eqpResetForm(tipo);
+}
+
+function eqpRenderHistorial(tipo){
+  const st = eqpState[tipo];
+  const list = document.getElementById(tipo+'_histList');
+  const fFecha = document.getElementById(tipo+'_filFecha').value;
+  const fTexto = document.getElementById(tipo+'_filTexto').value.trim().toLowerCase();
+  let docs = [...st.records];
+  if(fFecha) docs = docs.filter(d=>d.fecha===fFecha);
+  if(fTexto) docs = docs.filter(d=> (d.trabajador||'').toLowerCase().includes(fTexto) || (d.labor||'').toLowerCase().includes(fTexto));
+
+  if(docs.length===0){ list.innerHTML = '<div class="empty">No hay inspecciones guardadas en este celular.</div>'; return; }
+
+  list.innerHTML = docs.map(d=>{
+    const malos = d.items.filter(i=>i.estado==='M').length;
+    const noes = d.preguntas.filter(p=>p.respuesta==='NO').length;
+    const total = malos+noes;
+    const badgesItems = d.items.filter(i=>i.estado==='M').map(i=>`<span class="badge M">${escapeHtml(i.aspecto)}</span>`).join('');
+    const badgesPreg = d.preguntas.filter(p=>p.respuesta==='NO').map(p=>`<span class="badge M">${escapeHtml(p.pregunta.slice(0,40))}${p.pregunta.length>40?'…':''}: No</span>`).join('');
+    return `
+      <div class="hist-item" data-id="${d.id}">
+        <div class="hist-top">
+          <div>
+            <b>${d.trabajador||'—'}</b>
+            <div class="hist-meta">${d.labor||''} · ${d.fecha||''}</div>
+          </div>
+          ${d.foto_data ? `<img class="foto-thumb" src="${d.foto_data}" alt="Foto">` : ''}
+          <span class="badge ${total>0?'M':'ok'}">${total>0? total+' alerta(s)' : 'OK'}</span>
+        </div>
+        <div class="hist-meta">Responsable: ${d.responsable||'—'}</div>
+        ${(badgesItems+badgesPreg) ? `<div class="hist-badges">${badgesItems}${badgesPreg}</div>` : ''}
+        ${d.observaciones ? `<div class="hist-obs">"${escapeHtml(d.observaciones)}"</div>` : ''}
+        <div class="sig-thumbs">
+          <div class="sig-thumb"><div class="lbl">Trabajador</div>${d.firma_trabajador_data?`<img src="${d.firma_trabajador_data}">`:'—'}</div>
+          <div class="sig-thumb"><div class="lbl">Responsable</div>${d.firma_responsable_data?`<img src="${d.firma_responsable_data}">`:'—'}</div>
+        </div>
+        <div class="hist-actions">
+          <button class="btn-edit" data-editid="${d.id}" type="button">✏️ Editar</button>
+          <button class="btn-del" data-delid="${d.id}" type="button">🗑 Eliminar</button>
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  list.querySelectorAll('[data-editid]').forEach(btn=> btn.addEventListener('click', ()=> eqpEditar(tipo, btn.dataset.editid)));
+  list.querySelectorAll('[data-delid]').forEach(btn=> btn.addEventListener('click', ()=> eqpEliminar(tipo, btn.dataset.delid)));
+}
+
+async function eqpExportarExcel(tipo){
+  const cfg = EQUIPO_CONFIGS[tipo];
+  const st = eqpState[tipo];
+  if(st.records.length===0){ toast('No hay inspecciones guardadas en este celular para exportar'); return; }
+  const expBtn = document.getElementById(tipo+'_btnExport');
+  expBtn.disabled = true; expBtn.textContent = 'Generando Excel…';
+  try{
+    const wb = new ExcelJS.Workbook();
+    wb.creator = 'Inspección '+cfg.titulo;
+    const ordered = [...st.records].sort((a,b)=> (a.created_at||'').localeCompare(b.created_at||''));
+
+    const THIN = {style:'thin', color:{argb:'FFDEDBD1'}};
+    const BORDER = {top:THIN, bottom:THIN, left:THIN, right:THIN};
+    function styleHeader(row){
+      row.height = 28;
+      row.eachCell(c=>{
+        c.font = {bold:true, color:{argb:'FF1B2A4A'}, size:11};
+        c.fill = {type:'pattern', pattern:'solid', fgColor:{argb:'FFFCE9B9'}};
+        c.alignment = {vertical:'middle', horizontal:'center', wrapText:true};
+        c.border = BORDER;
+      });
+    }
+    function styleBody(ws){
+      for(let r=2;r<=ws.rowCount;r++){
+        ws.getRow(r).eachCell({includeEmpty:true}, c=>{
+          c.border = BORDER;
+          c.alignment = {vertical:'middle', wrapText:true};
+          if(r%2===0) c.fill = c.fill || {type:'pattern', pattern:'solid', fgColor:{argb:'FFF7F5F0'}};
+        });
+      }
+    }
+
+    const wsR = wb.addWorksheet('Resumen', {properties:{tabColor:{argb:'FF3D7A4B'}}, views:[{state:'frozen', ySplit:1}]});
+    const campoCols = cfg.campos.map(c=>({header:c.label, key:'c_'+c.id, width:16}));
+    wsR.columns = [
+      {header:'Fecha', key:'fecha', width:12},
+      {header:'Trabajador', key:'trabajador', width:22},
+      {header:'Labor', key:'labor', width:18},
+      {header:'Responsable', key:'responsable', width:20},
+      ...campoCols,
+      {header:'Malos', key:'malos', width:9},
+      {header:'Preguntas con No', key:'noes', width:15},
+      {header:'Observaciones', key:'obs', width:30},
+      {header:'Firma Trabajador', width:18},
+      {header:'Firma Responsable', width:18},
+      {header:'Foto', width:14},
+    ];
+    const baseColCount = 4 + campoCols.length;
+    const COL_MALOS = baseColCount+1, COL_NOES = baseColCount+2;
+    const COL_FIRMA_T = baseColCount+4, COL_FIRMA_R = baseColCount+5, COL_FOTO = baseColCount+6;
+
+    ordered.forEach(d=>{
+      const row = {fecha:d.fecha||'', trabajador:d.trabajador||'', labor:d.labor||'', responsable:d.responsable||'',
+        malos: d.items.filter(i=>i.estado==='M').length,
+        noes: d.preguntas.filter(p=>p.respuesta==='NO').length,
+        obs: d.observaciones||''};
+      cfg.campos.forEach(c=>{ row['c_'+c.id] = (d.campos&&d.campos[c.id])||''; });
+      wsR.addRow(row);
+    });
+    styleHeader(wsR.getRow(1));
+    styleBody(wsR);
+    for(let r=2;r<=wsR.rowCount;r++){
+      const row = wsR.getRow(r);
+      [COL_MALOS, COL_NOES].forEach(col=>{
+        const cell = row.getCell(col);
+        if(Number(cell.value)>0){ cell.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFFBE4E1'}}; cell.font={bold:true,color:{argb:'FFB23A2E'}}; }
+      });
+    }
+    wsR.autoFilter = {from:{row:1,column:1}, to:{row:1,column:wsR.columns.length}};
+    ordered.forEach((d,i)=>{
+      const rowIdx = i+2;
+      wsR.getRow(rowIdx).height = 46;
+      const jobs = [
+        {data:d.firma_trabajador_data, col:COL_FIRMA_T, w:90, h:40},
+        {data:d.firma_responsable_data, col:COL_FIRMA_R, w:90, h:40},
+        {data:d.foto_data, col:COL_FOTO, w:50, h:40},
+      ];
+      jobs.forEach(job=>{
+        if(!job.data) return;
+        try{
+          const {buffer, extension} = dataURLtoBuffer(job.data);
+          const imgId = wb.addImage({buffer, extension});
+          wsR.addImage(imgId, {tl:{col:job.col-0.95, row:rowIdx-0.95}, ext:{width:job.w, height:job.h}});
+        }catch(e){}
+      });
+    });
+
+    const wsD = wb.addWorksheet('Equipo', {properties:{tabColor:{argb:'FFD98E2B'}}, views:[{state:'frozen', ySplit:1}]});
+    wsD.columns = [
+      {header:'Fecha', key:'fecha', width:12}, {header:'Trabajador', key:'trabajador', width:22},
+      {header:'Aspecto', key:'aspecto', width:46}, {header:'Estado', key:'estado', width:11},
+      {header:'Observación', key:'obs', width:34},
+    ];
+    ordered.forEach(d=>{
+      d.items.forEach(it=>{
+        wsD.addRow({fecha:d.fecha||'', trabajador:d.trabajador||'', aspecto:it.aspecto,
+          estado: it.estado==='B'?'Bueno':it.estado==='M'?'Malo':it.estado==='NT'?'No tiene':'', obs:it.observacion||''});
+      });
+    });
+    styleHeader(wsD.getRow(1));
+    styleBody(wsD);
+    for(let r=2;r<=wsD.rowCount;r++){
+      const cell = wsD.getRow(r).getCell(4);
+      if(cell.value==='Malo'){ cell.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFFBE4E1'}}; cell.font={bold:true,color:{argb:'FFB23A2E'}}; }
+      else if(cell.value==='Bueno'){ cell.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFE4F1E5'}}; cell.font={bold:true,color:{argb:'FF3D7A4B'}}; }
+    }
+    wsD.autoFilter = {from:{row:1,column:1}, to:{row:1,column:wsD.columns.length}};
+
+    const wsT = wb.addWorksheet('Trabajador', {properties:{tabColor:{argb:'FF2B6FD9'}}, views:[{state:'frozen', ySplit:1}]});
+    wsT.columns = [
+      {header:'Fecha', key:'fecha', width:12}, {header:'Trabajador', key:'trabajador', width:22},
+      {header:'Pregunta', key:'pregunta', width:55}, {header:'Respuesta', key:'resp', width:11},
+    ];
+    ordered.forEach(d=>{
+      d.preguntas.forEach(p=>{
+        wsT.addRow({fecha:d.fecha||'', trabajador:d.trabajador||'', pregunta:p.pregunta, resp:p.respuesta});
+      });
+    });
+    styleHeader(wsT.getRow(1));
+    styleBody(wsT);
+    for(let r=2;r<=wsT.rowCount;r++){
+      const cell = wsT.getRow(r).getCell(4);
+      if(cell.value==='NO'){ cell.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFFBE4E1'}}; cell.font={bold:true,color:{argb:'FFB23A2E'}}; }
+      else if(cell.value==='SI'){ cell.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFE4F1E5'}}; cell.font={bold:true,color:{argb:'FF3D7A4B'}}; }
+    }
+    wsT.autoFilter = {from:{row:1,column:1}, to:{row:1,column:wsT.columns.length}};
+
+    const buf = await wb.xlsx.writeBuffer();
+    const blob = new Blob([buf], {type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+    const sizeMB = (blob.size/1024/1024).toFixed(1);
+    descargarBlobDirecto(blob, 'inspecciones_'+tipo+'.xlsx');
+    toast('Descargando… ('+sizeMB+' MB)');
+  }catch(e){
+    toast('No se pudo generar el Excel');
+    console.error(e);
+  }finally{
+    expBtn.disabled = false; expBtn.textContent = 'Exportar a Excel';
+  }
+}
+
+function eqpInit(tipo){
+  const cfg = EQUIPO_CONFIGS[tipo];
+  eqpState[tipo] = {records:[], editingId:null, sigPads:{}, fotoData:null, itemState:{}, preguntaState:{}};
+  const screen = document.getElementById('screen-'+tipo);
+  screen.innerHTML = eqpRenderScreenHtml(tipo, cfg);
+  document.getElementById(tipo+'_fFecha').value = new Date().toISOString().slice(0,10);
+  eqpLoadRecords(tipo);
+  eqpBuildItems(tipo);
+  eqpBuildPreguntas(tipo);
+  createSignaturePad(eqpState[tipo].sigPads, 'trabajador', tipo+'_sig_trab', tipo+'_sigClearTrab', null);
+  createSignaturePad(eqpState[tipo].sigPads, 'responsable', tipo+'_sig_resp', tipo+'_sigClearResp', null);
+  eqpSetupPhoto(tipo);
+  setupTabs(screen, ()=>eqpRenderHistorial(tipo));
+  document.getElementById(tipo+'_btnGuardar').addEventListener('click', ()=>eqpGuardar(tipo));
+  document.getElementById(tipo+'_btnCancelarEdicion').addEventListener('click', ()=>eqpCancelarEdicion(tipo));
+  document.getElementById(tipo+'_btnExport').addEventListener('click', ()=>eqpExportarExcel(tipo));
+  document.getElementById(tipo+'_filFecha').addEventListener('change', ()=>eqpRenderHistorial(tipo));
+  document.getElementById(tipo+'_filTexto').addEventListener('input', ()=>eqpRenderHistorial(tipo));
+  eqpSaveRecords(tipo);
+  eqpRenderHistorial(tipo);
+}
+
+
 // =========================== ARRANQUE ===========================
 (function(){
   initEpp();
@@ -3125,6 +3818,7 @@ function initExt(){
   setupTabs(document.getElementById('screen-epp'), eppRenderHistorial);
   setupTabs(document.getElementById('screen-bot'), botRenderHistorial);
   setupTabs(document.getElementById('screen-ext'), extRenderHistorial);
+  ['guadana','bombaespalda','bombainsufladora','motosierra'].forEach(eqpInit);
   setupHomeNav();
   mostrarPantalla('screen-home');
   if('serviceWorker' in navigator){
