@@ -626,6 +626,14 @@
             <span class="home-code">SST-FT-017</span>
           </span>
         </button>
+        <button class="home-card" data-abrir="bicicletas" type="button">
+          <span class="home-icon" style="background:var(--good-bg);color:var(--good);">🚲</span>
+          <span class="home-body">
+            <span class="home-title">Bicicletas</span>
+            <span class="home-desc">Estructura, frenos, cadena y seguridad — por bicicleta</span>
+            <span class="home-code">Sin código oficial</span>
+          </span>
+        </button>
       </div>
     </div>
   </div>
@@ -644,6 +652,7 @@
   <div id="screen-vehiculo" class="screen hidden"></div>
   <div id="screen-motos" class="screen hidden"></div>
   <div id="screen-bus" class="screen hidden"></div>
+  <div id="screen-bicicletas" class="screen hidden"></div>
   <div id="screen-epp" class="screen hidden">
 <div class="app">
 
@@ -1048,6 +1057,8 @@ function comprimirFoto(file){
 
 // pads: el objeto (eppSigPads / botSigPads / extSigPads) donde se guarda el pad.
 // name: la llave dentro de ese objeto ('trabajador', 'inspector', 'responsable'...).
+const ALL_SIGNATURE_PADS = []; // {screenId, resize} — para corregir el lienzo al mostrar cada pantalla
+
 function createSignaturePad(pads, name, canvasId, clearBtnId, statusId){
   const canvas = document.getElementById(canvasId);
   const ctx = canvas.getContext('2d');
@@ -1058,14 +1069,28 @@ function createSignaturePad(pads, name, canvasId, clearBtnId, statusId){
     ctx.save(); ctx.setTransform(1,0,0,1,0,0);
     ctx.fillStyle = '#FFFFFF'; ctx.fillRect(0,0,canvas.width,canvas.height); ctx.restore();
   }
-  function sizeCanvas(){
-    const w = Math.round(canvas.getBoundingClientRect().width) || 300;
-    const h = Math.round(canvas.getBoundingClientRect().height) || 110;
-    canvas.width = w; canvas.height = h;
+  // preserveContent=true se usa cuando la pantalla ya se había mostrado antes
+  // (no vuelve a medir si sigue oculta, no repite el ajuste si ya mide bien,
+  // y conserva el trazo ya dibujado en vez de borrarlo).
+  function sizeCanvas(preserveContent){
+    const rectW = Math.round(canvas.getBoundingClientRect().width);
+    const rectH = Math.round(canvas.getBoundingClientRect().height);
+    if(preserveContent && (!rectW || !rectH)) return;
+    if(preserveContent && canvas.width===rectW && canvas.height===rectH) return;
+    const prevDataUrl = (preserveContent && pad.drawn) ? canvas.toDataURL('image/png') : null;
+    canvas.width = rectW || 300; canvas.height = rectH || 110;
     paintWhiteBg();
     ctx.lineWidth = 2.5; ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.strokeStyle = '#1A2420';
+    if(prevDataUrl){
+      const img = new Image();
+      img.onload = ()=> ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      img.src = prevDataUrl;
+    }
   }
-  sizeCanvas();
+  sizeCanvas(false);
+  pad.resize = ()=> sizeCanvas(true);
+  const screenEl = canvas.closest('.screen');
+  ALL_SIGNATURE_PADS.push({screenId: screenEl ? screenEl.id : null, resize: pad.resize});
 
   let drawing = false, last = null;
   function pos(e){
@@ -1143,6 +1168,12 @@ function setupTabs(root, onHistorial){
 function mostrarPantalla(id){
   document.querySelectorAll('.screen').forEach(s=> s.classList.toggle('hidden', s.id!==id));
   window.scrollTo({top:0});
+  // la pantalla recién mostrada puede traer canvas de firma que se midieron
+  // mientras estaban ocultos (tamaño incorrecto) — se corrigen ahora que sí
+  // se puede medir su tamaño real en pantalla.
+  requestAnimationFrame(()=>{
+    ALL_SIGNATURE_PADS.filter(p=>p.screenId===id).forEach(p=>p.resize());
+  });
 }
 function setupHomeNav(){
   document.querySelectorAll('[data-abrir]').forEach(btn=>{
@@ -3613,7 +3644,11 @@ function eqpRenderScreenHtml(tipo, cfg){
         <label>Fecha</label>
         <input type="date" id="${tipo}_fFecha">
         <label>Nombre del trabajador</label>
-        <input type="text" id="${tipo}_fTrabajador" placeholder="Nombre completo">
+        <div class="ac-wrap">
+          <input type="text" id="${tipo}_fTrabajador" placeholder="Escribe para buscar..." autocomplete="off">
+          <div class="ac-list hidden" id="${tipo}_fTrabajadorList"></div>
+        </div>
+        <div id="${tipo}_wCedulaTag" class="cedula-tag hidden"></div>
         <label>Labor</label>
         <input type="text" id="${tipo}_fLabor" placeholder="Ej: Guadañado zona 3">
         <label>Responsable de la inspección</label>
@@ -3744,6 +3779,52 @@ function eqpBuildPreguntas(tipo){
   });
 }
 
+// Autocompletado del nombre del trabajador — misma lista de personas (PERSONAS)
+// que ya usa la app de EPP.
+function eqpSetupAutocomplete(tipo){
+  const st = eqpState[tipo];
+  const input = document.getElementById(tipo+'_fTrabajador');
+  const list = document.getElementById(tipo+'_fTrabajadorList');
+  const tag = document.getElementById(tipo+'_wCedulaTag');
+
+  function renderList(q){
+    const query = q.trim().toUpperCase();
+    if(!query){ list.classList.add('hidden'); return; }
+    const matches = PERSONAS.filter(p => p.nombre.includes(query)).slice(0, 8);
+    if(matches.length===0){
+      list.innerHTML = '<div class="ac-empty">No está en el listado — puedes escribir el nombre igual.</div>';
+    }else{
+      list.innerHTML = matches.map(p=>{
+        const idx = p.nombre.indexOf(query);
+        const marked = idx>=0
+          ? p.nombre.slice(0,idx) + '<b>' + p.nombre.slice(idx, idx+query.length) + '</b>' + p.nombre.slice(idx+query.length)
+          : p.nombre;
+        return `<div class="ac-item" data-nombre="${p.nombre.replace(/"/g,'&quot;')}" data-cedula="${p.cedula}">${marked}<span class="ced">C.C. ${p.cedula}</span></div>`;
+      }).join('');
+    }
+    list.classList.remove('hidden');
+  }
+
+  input.addEventListener('input', ()=>{
+    st.selectedCedula = null;
+    tag.classList.add('hidden');
+    renderList(input.value);
+  });
+  input.addEventListener('focus', ()=>{ if(input.value.trim()) renderList(input.value); });
+  document.addEventListener('click', (e)=>{
+    if(!e.target.closest('.ac-wrap')) list.classList.add('hidden');
+  });
+  list.addEventListener('click', (e)=>{
+    const item = e.target.closest('.ac-item');
+    if(!item || !item.dataset.nombre) return;
+    input.value = item.dataset.nombre;
+    st.selectedCedula = item.dataset.cedula;
+    tag.textContent = 'C.C. ' + st.selectedCedula;
+    tag.classList.remove('hidden');
+    list.classList.add('hidden');
+  });
+}
+
 function eqpSetupPhoto(tipo){
   const st = eqpState[tipo];
   const btn = document.getElementById(tipo+'_fotoBtn');
@@ -3768,6 +3849,8 @@ function eqpSetupPhoto(tipo){
 function eqpResetForm(tipo){
   const st = eqpState[tipo];
   document.getElementById(tipo+'_fTrabajador').value = '';
+  st.selectedCedula = null;
+  document.getElementById(tipo+'_wCedulaTag').classList.add('hidden');
   document.getElementById(tipo+'_fLabor').value = '';
   document.getElementById(tipo+'_fObs').value = '';
   EQUIPO_CONFIGS[tipo].campos.forEach(c=>{ document.getElementById(tipo+'_c_'+c.id).value=''; });
@@ -3851,6 +3934,7 @@ async function eqpIntentarEnvioPA(tipo, record){
     codigo: record.codigo,
     fecha: record.fecha,
     trabajador: record.trabajador,
+    cedula: record.cedula || '',
     labor: record.labor,
     responsable: record.responsable,
     campos,
@@ -4005,7 +4089,7 @@ function eqpGuardar(tipo){
   const record = {
     id: st.editingId || (tipo+'_'+Date.now()+'_'+Math.random().toString(36).slice(2,7)),
     fecha: document.getElementById(tipo+'_fFecha').value,
-    trabajador, labor, responsable, campos, items, preguntas,
+    trabajador, cedula: st.selectedCedula || '', labor, responsable, campos, items, preguntas,
     observaciones: document.getElementById(tipo+'_fObs').value.trim(),
     firma_trabajador_data: st.sigPads.trabajador.toDataURL(),
     firma_responsable_data: st.sigPads.responsable.toDataURL(),
@@ -4057,6 +4141,10 @@ function eqpEditar(tipo, id){
 
   document.getElementById(tipo+'_fFecha').value = d.fecha || '';
   document.getElementById(tipo+'_fTrabajador').value = d.trabajador || '';
+  st.selectedCedula = d.cedula || null;
+  const tagEdit = document.getElementById(tipo+'_wCedulaTag');
+  if(st.selectedCedula){ tagEdit.textContent = 'C.C. '+st.selectedCedula; tagEdit.classList.remove('hidden'); }
+  else{ tagEdit.classList.add('hidden'); }
   document.getElementById(tipo+'_fLabor').value = d.labor || '';
   document.getElementById(tipo+'_fResponsable').value = d.responsable || '';
   EQUIPO_CONFIGS[tipo].campos.forEach(c=>{ document.getElementById(tipo+'_c_'+c.id).value = (d.campos&&d.campos[c.id])||''; });
@@ -4190,6 +4278,7 @@ async function eqpExportarExcel(tipo){
     wsR.columns = [
       {header:'Fecha', key:'fecha', width:12},
       {header:'Trabajador', key:'trabajador', width:22},
+      {header:'Cedula', key:'cedula', width:14},
       {header:'Labor', key:'labor', width:18},
       {header:'Responsable', key:'responsable', width:20},
       ...campoCols,
@@ -4200,12 +4289,12 @@ async function eqpExportarExcel(tipo){
       {header:'Firma Responsable', width:18},
       {header:'Foto', width:14},
     ];
-    const baseColCount = 4 + campoCols.length;
+    const baseColCount = 5 + campoCols.length;
     const COL_MALOS = baseColCount+1, COL_NOES = baseColCount+2;
     const COL_FIRMA_T = baseColCount+4, COL_FIRMA_R = baseColCount+5, COL_FOTO = baseColCount+6;
 
     ordered.forEach(d=>{
-      const row = {fecha:d.fecha||'', trabajador:d.trabajador||'', labor:d.labor||'', responsable:d.responsable||'',
+      const row = {fecha:d.fecha||'', trabajador:d.trabajador||'', cedula:d.cedula||'', labor:d.labor||'', responsable:d.responsable||'',
         malos: d.items.filter(i=>i.estado==='M').length,
         noes: d.preguntas.filter(p=>p.respuesta==='NO').length,
         obs: d.observaciones||''};
@@ -4295,7 +4384,7 @@ async function eqpExportarExcel(tipo){
 
 function eqpInit(tipo){
   const cfg = EQUIPO_CONFIGS[tipo];
-  eqpState[tipo] = {records:[], editingId:null, sigPads:{}, fotoData:null, itemState:{}, preguntaState:{}, enviandoPA:false, enviandoId:null};
+  eqpState[tipo] = {records:[], editingId:null, sigPads:{}, fotoData:null, itemState:{}, preguntaState:{}, enviandoPA:false, enviandoId:null, selectedCedula:null};
   const screen = document.getElementById('screen-'+tipo);
   screen.innerHTML = eqpRenderScreenHtml(tipo, cfg);
   document.getElementById(tipo+'_fFecha').value = new Date().toISOString().slice(0,10);
@@ -4304,6 +4393,7 @@ function eqpInit(tipo){
   eqpBuildPreguntas(tipo);
   createSignaturePad(eqpState[tipo].sigPads, 'trabajador', tipo+'_sig_trab', tipo+'_sigClearTrab', null);
   createSignaturePad(eqpState[tipo].sigPads, 'responsable', tipo+'_sig_resp', tipo+'_sigClearResp', null);
+  eqpSetupAutocomplete(tipo);
   eqpSetupPhoto(tipo);
   setupTabs(screen, ()=>eqpRenderHistorial(tipo));
   document.getElementById(tipo+'_btnGuardar').addEventListener('click', ()=>eqpGuardar(tipo));
@@ -4338,6 +4428,7 @@ function eqpInit(tipo){
 
 const UNIDAD_CONFIGS = {
   zorrillos: {
+    paWebhookUrl: '', // se completa cuando el flujo de zorrillos esté listo
     titulo: 'Carromatos (Zorrillos)', codigo: 'SST-FT-015',
     subtitulo: 'Un carromato por inspección — repite para el siguiente',
     idLabel: 'N° de carromato o zorrillo', idPlaceholder: 'Ej: 3',
@@ -4347,6 +4438,7 @@ const UNIDAD_CONFIGS = {
     firmas: [{key:'trabajador', label:'Firma del trabajador'}, {key:'responsable', label:'Firma del responsable de la inspección'}],
   },
   vagones: {
+    paWebhookUrl: '', // se completa cuando el flujo de vagones esté listo
     titulo: 'Vagones', codigo: '',
     subtitulo: 'Un vagón por inspección — repite para el siguiente',
     idLabel: 'N° de vagón', idPlaceholder: 'Ej: 12',
@@ -4356,6 +4448,7 @@ const UNIDAD_CONFIGS = {
     firmas: [{key:'responsable', label:'Firma del responsable de la inspección'}],
   },
   tractores: {
+    paWebhookUrl: '', // se completa cuando el flujo de tractores esté listo
     titulo: 'Tractor agrícola', codigo: 'FT-SST-012',
     subtitulo: 'Revisión mecánica completa',
     idLabel: 'N° de tractor', idPlaceholder: 'Ej: 3',
@@ -4393,6 +4486,7 @@ const UNIDAD_CONFIGS = {
     firmas: [{key:'responsable', label:'Firma del responsable de la inspección / operario'}],
   },
   herramientas: {
+    paWebhookUrl: '', // se completa cuando el flujo de herramientas esté listo
     titulo: 'Herramientas manuales', codigo: 'FT-SST-013',
     subtitulo: 'Un trabajador por inspección — repite para el siguiente',
     idLabel: 'Nombre del trabajador', idPlaceholder: 'Nombre completo',
@@ -4414,6 +4508,7 @@ const UNIDAD_CONFIGS = {
     firmas: [{key:'trabajador', label:'Firma del trabajador'}],
   },
   locativa: {
+    paWebhookUrl: '', // se completa cuando el flujo de locativa esté listo
     titulo: 'Inspección locativa', codigo: 'SST-FT-019',
     subtitulo: 'Peligros físicos, locativos, eléctricos y más — por área',
     idLabel: 'Área o locación', idPlaceholder: 'Ej: Oficina Vigía',
@@ -4486,6 +4581,7 @@ const UNIDAD_CONFIGS = {
     firmas: [{key:'responsable', label:'Firma responsable de la inspección'}, {key:'sgsst', label:'Firma responsable del SG-SST'}],
   },
   rotulos: {
+    paWebhookUrl: '', // se completa cuando el flujo de rotulos esté listo
     titulo: 'Rótulos', codigo: '',
     subtitulo: 'Texto, color y amarradera — por rótulo',
     idLabel: 'Sede - Área donde está el rótulo', idPlaceholder: 'Ej: Bodega insumos',
@@ -4495,6 +4591,7 @@ const UNIDAD_CONFIGS = {
     firmas: [{key:'responsable', label:'Firma del responsable de la inspección'}],
   },
   kitderrames: {
+    paWebhookUrl: '', // se completa cuando el flujo de kitderrames esté listo
     titulo: 'Kit de derrames', codigo: '',
     subtitulo: 'Elementos del kit y acciones de mejora',
     idLabel: 'Sede - Área', idPlaceholder: 'Ej: Bodega Corozos',
@@ -4506,6 +4603,7 @@ const UNIDAD_CONFIGS = {
     firmas: [{key:'responsable', label:'Firma del responsable de la inspección'}],
   },
   vehiculo: {
+    paWebhookUrl: '', // se completa cuando el flujo de vehiculo esté listo
     titulo: 'Vehículo liviano', codigo: '',
     subtitulo: 'Documentos y revisión mecánica completa',
     idLabel: 'Placa del vehículo', idPlaceholder: 'Ej: ABC123',
@@ -4545,6 +4643,7 @@ const UNIDAD_CONFIGS = {
     firmas: [{key:'conductor', label:'Firma del conductor'}, {key:'responsable', label:'Firma del responsable de la inspección'}],
   },
   motos: {
+    paWebhookUrl: '', // se completa cuando el flujo de motos esté listo
     titulo: 'Motocicletas', codigo: 'SST-FT-016',
     subtitulo: 'Documentos, luces y mecánica',
     idLabel: 'Placa de la moto', idPlaceholder: 'Ej: XYZ12A',
@@ -4568,6 +4667,7 @@ const UNIDAD_CONFIGS = {
     firmas: [{key:'trabajador', label:'Firma del trabajador (con cédula)'}, {key:'responsable', label:'Firma del responsable de la inspección'}],
   },
   bus: {
+    paWebhookUrl: '', // se completa cuando el flujo de bus esté listo
     titulo: 'Bus de transporte de personal', codigo: 'SST-FT-017',
     subtitulo: 'Documentos y revisión mecánica completa',
     idLabel: 'Placa del bus', idPlaceholder: 'Ej: ABC123',
@@ -4648,10 +4748,43 @@ const UNIDAD_CONFIGS = {
     ],
     firmas: [{key:'conductor', label:'Firma del conductor'}, {key:'responsable', label:'Firma del responsable de la inspección'}],
   },
+  bicicletas: {
+    paWebhookUrl: '', // se completa cuando el flujo de bicicletas esté listo
+    titulo: 'Bicicletas', codigo: '',
+    subtitulo: 'Estructura, frenos, cadena y seguridad — por bicicleta',
+    idLabel: 'Identificación de la bicicleta (código o número)', idPlaceholder: 'Ej: BICI-04',
+    camposHeader: [],
+    estadoOpciones: ['B','R','M'],
+    items: [
+      {categoria:'1. Estructura y marco', aspecto:'Cuadro y horquilla sin golpes, grietas o partes flojas'},
+      {categoria:'1. Estructura y marco', aspecto:'Asiento bien sujeto y en buen estado'},
+      {categoria:'1. Estructura y marco', aspecto:'Tornillos bien ajustados'},
+      {categoria:'2. Ruedas y llantas', aspecto:'Llantas sin cortes ni desgaste excesivo'},
+      {categoria:'2. Ruedas y llantas', aspecto:'Ruedas bien alineadas y sin moverse de lado a lado'},
+      {categoria:'2. Ruedas y llantas', aspecto:'Presión de aire correcta'},
+      {categoria:'3. Frenos', aspecto:'Frenos funcionan bien al apretar las manillas'},
+      {categoria:'3. Frenos', aspecto:'Pastillas o zapatas en buen estado'},
+      {categoria:'3. Frenos', aspecto:'Cables sin desgaste ni cortes'},
+      {categoria:'4. Pedales y cadena', aspecto:'Cadena limpia y con lubricación'},
+      {categoria:'4. Pedales y cadena', aspecto:'Cambios de marcha funcionan bien'},
+      {categoria:'4. Pedales y cadena', aspecto:'Pedales giran sin ruidos extraños'},
+      {categoria:'5. Manillar y suspensión', aspecto:'Manillar gira sin dificultad'},
+      {categoria:'5. Manillar y suspensión', aspecto:'Suspensión absorbe bien los golpes'},
+      {categoria:'5. Manillar y suspensión', aspecto:'Sillín y manillar bien ajustados'},
+      {categoria:'6. Elementos de seguridad', aspecto:'Luces delantera y trasera funcionan'},
+      {categoria:'6. Elementos de seguridad', aspecto:'Reflectores presentes y visibles'},
+      {categoria:'6. Elementos de seguridad', aspecto:'Timbre o bocina en buen estado'},
+      {categoria:'7. Accesorios y otros', aspecto:'Pata de apoyo y portaequipajes seguros'},
+      {categoria:'7. Accesorios y otros', aspecto:'Accesorios bien sujetos'},
+      {categoria:'7. Accesorios y otros', aspecto:'Guardabarros y protector de cadena instalados'},
+      {categoria:'Aprobación final', aspecto:'Estado general de la bicicleta (Bueno = apta para uso, Regular = requiere mantenimiento menor, Malo = no apta hasta reparación)'},
+    ],
+    firmas: [{key:'responsable', label:'Firma del inspector'}],
+  },
 };
 
 const udState = {};
-const UD_ESTADO_LABEL = {B:'Bueno', M:'Malo', NT:'No tiene', NA:'No aplica', SI:'Sí', NO:'No', C:'Cumple', NC:'No cumple'};
+const UD_ESTADO_LABEL = {B:'Bueno', M:'Malo', NT:'No tiene', NA:'No aplica', SI:'Sí', NO:'No', C:'Cumple', NC:'No cumple', R:'Regular'};
 
 function udRenderScreenHtml(tipo, cfg){
   const camposHtml = cfg.camposHeader.map(c=>`
@@ -4671,7 +4804,11 @@ function udRenderScreenHtml(tipo, cfg){
   const leyenda = cfg.estadoOpciones.map(v=>v+' = '+UD_ESTADO_LABEL[v]).join(' · ');
 
   return `
-    <div class="local-note">📱 Cada inspección se guarda en este celular. Exporta a Excel desde el Historial.</div>
+    <div class="local-note">📱 Cada inspección se guarda en este celular y se envía sola al Excel central cuando hay señal. También puedes exportar a Excel desde el Historial.</div>
+    <div id="${tipo}_paBanner" class="pa-banner hidden">
+      <span id="${tipo}_paBannerText"></span>
+      <button type="button" id="${tipo}_btnReenviar">Reenviar ahora</button>
+    </div>
     <header class="top">
       <button class="back-btn" type="button" data-volver>← Menú</button>
       <h1>${cfg.titulo}${cfg.codigo ? ' · '+cfg.codigo : ''}</h1>
@@ -4730,6 +4867,168 @@ ${cfg.accionesMejora ? `
       <div id="${tipo}_histList"></div>
     </div>
   `;
+}
+
+// ---------- envío a Power Automate, compartido por todos los tipos de este motor ----------
+const UD_PA_TIMEOUT_MS = 100000;
+const UD_PA_ENFRIAMIENTO_MS = 10*60*1000;
+const UD_PA_MAX_DUDOSOS = 2;
+
+function udGenerarCodigo(fecha, identificador){
+  const f = (fecha||hoyISO()).replace(/-/g,'');
+  const c = (identificador||'sinid').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'').slice(0,20) || 'sinid';
+  const now = new Date();
+  const hhmmss = String(now.getHours()).padStart(2,'0') + String(now.getMinutes()).padStart(2,'0') + String(now.getSeconds()).padStart(2,'0');
+  return f+'-'+c+'-'+hhmmss;
+}
+
+function udEstaPendienteEnvio(r){ return r.pa_estado === 'pendiente'; }
+function udEstaPorRevisarEnvio(r){ return r.pa_estado === 'revisar'; }
+function udContarPendientesEnvio(tipo){ return udState[tipo].records.filter(udEstaPendienteEnvio).length; }
+function udContarPorRevisarEnvio(tipo){ return udState[tipo].records.filter(udEstaPorRevisarEnvio).length; }
+
+function udActualizarBannerPA(tipo){
+  const n = udContarPendientesEnvio(tipo), m = udContarPorRevisarEnvio(tipo);
+  const banner = document.getElementById(tipo+'_paBanner');
+  const texto = document.getElementById(tipo+'_paBannerText');
+  if(n===0 && m===0){ banner.classList.add('hidden'); return; }
+  banner.classList.remove('hidden');
+  const partes = [];
+  if(n>0) partes.push(navigator.onLine
+    ? '⏳ '+n+' inspección(es) por enviar al Excel central'
+    : '📴 Sin señal — '+n+' inspección(es) esperan para enviarse');
+  if(m>0) partes.push('⚠️ '+m+' sin confirmar: revisa si están en el Excel');
+  texto.textContent = partes.join(' · ');
+}
+
+async function udIntentarEnvioPA(tipo, record){
+  const cfg = UNIDAD_CONFIGS[tipo];
+  const campos = {};
+  cfg.camposHeader.forEach(c=>{ campos[c.id] = (record.campos||{})[c.id] || ''; });
+  const firmas = {};
+  cfg.firmas.forEach(f=>{ firmas[f.key] = soloBase64((record.firmas_data||{})[f.key]); });
+  const payload = {
+    codigo: record.codigo,
+    fecha: record.fecha,
+    identificador: record.identificador,
+    responsable: record.responsable || '',
+    campos,
+    observaciones: record.observaciones,
+    firmas,
+    fotos: record.foto_data ? [soloBase64(record.foto_data)] : [],
+    renglones: (record.items||[]).map(it=>{
+      const r = { detalle: it.aspecto, estado: it.estado || '', observacion: it.observacion || '' };
+      if(cfg.itemCantidad) r.cantidad = it.cantidad || '';
+      const original = cfg.items.find(x => (typeof x==='object' ? x.aspecto : x) === it.aspecto);
+      if(original && typeof original === 'object' && original.categoria) r.seccion = original.categoria;
+      return r;
+    }),
+    acciones: cfg.accionesMejora ? (record.acciones||[]) : undefined,
+  };
+  const ctrl = new AbortController();
+  const timer = setTimeout(()=>ctrl.abort(), UD_PA_TIMEOUT_MS);
+  try{
+    await fetch(cfg.paWebhookUrl, {
+      method: 'POST', mode: 'no-cors', headers: {'Content-Type': 'text/plain'},
+      body: JSON.stringify(payload), signal: ctrl.signal,
+    });
+    return 'ok';
+  }catch(e){
+    console.error('Envío a Power Automate ('+tipo+'):', e);
+    return (e && e.name === 'AbortError') ? 'tiempo' : 'red';
+  }finally{
+    clearTimeout(timer);
+  }
+}
+
+async function udPasadaDeEnvio(tipo, manual, soloId){
+  const st = udState[tipo];
+  udLoadRecords(tipo);
+  const ahora = Date.now();
+  const cola = st.records.filter(udEstaPendienteEnvio)
+    .filter(r => !soloId || r.id === soloId)
+    .filter(r => manual || !r.pa_ultimo_dudoso || (ahora - r.pa_ultimo_dudoso) > UD_PA_ENFRIAMIENTO_MS)
+    .sort((a,b)=> (a.created_at||'').localeCompare(b.created_at||''));
+  let enviadas = 0, dudosas = 0;
+  for(const r of cola){
+    const actual = st.records.find(x=>x.id===r.id);
+    if(!actual || !udEstaPendienteEnvio(actual)) continue;
+    st.enviandoId = actual.id;
+    udRenderHistorial(tipo);
+    const res = await udIntentarEnvioPA(tipo, actual);
+    st.enviandoId = null;
+    if(res === 'red') break;
+    const vigente = st.records.find(x=>x.id===r.id);
+    if(!vigente) continue;
+    if(res === 'ok'){
+      vigente.pa_estado = 'enviado';
+      vigente.pa_enviado_at = new Date().toISOString();
+      vigente.pa_dudosos = undefined;
+      vigente.pa_ultimo_dudoso = undefined;
+      enviadas++;
+    }else{
+      vigente.pa_dudosos = (vigente.pa_dudosos||0) + 1;
+      vigente.pa_ultimo_dudoso = Date.now();
+      if(vigente.pa_dudosos >= UD_PA_MAX_DUDOSOS) vigente.pa_estado = 'revisar';
+      dudosas++;
+    }
+    udSaveRecords(tipo);
+  }
+  if(enviadas>0) toast('✓ '+enviadas+' inspección(es) enviada(s)');
+  else if(dudosas>0) toast('⚠️ El flujo tardó en contestar: se revisará en unos minutos');
+}
+
+async function udEnviarPendientes(tipo, manual, soloId){
+  const cfg = UNIDAD_CONFIGS[tipo];
+  const st = udState[tipo];
+  if(!cfg.paWebhookUrl) return;
+  if(st.enviandoPA){ if(manual) toast('Ya hay un envío en curso, espera un momento'); return; }
+  if(!navigator.onLine){
+    if(manual) toast('Sin señal: se enviará solo cuando vuelva');
+    udActualizarBannerPA(tipo);
+    return;
+  }
+  st.enviandoPA = true;
+  try{
+    if(typeof navigator.locks !== 'undefined' && navigator.locks.request){
+      await navigator.locks.request(tipo+'-envio-pa', {ifAvailable:true}, async (lock)=>{
+        if(!lock){ if(manual) toast('Otra ventana está enviando, espera un momento'); return; }
+        await udPasadaDeEnvio(tipo, manual === true, soloId);
+      });
+    }else{
+      await udPasadaDeEnvio(tipo, manual === true, soloId);
+    }
+  }finally{
+    st.enviandoPA = false;
+    st.enviandoId = null;
+    udActualizarBannerPA(tipo);
+    udRenderHistorial(tipo);
+  }
+}
+
+function udReenviarRegistroPA(tipo, id){
+  const st = udState[tipo];
+  const r = st.records.find(x=>x.id===id);
+  if(!r) return;
+  r.pa_estado = 'pendiente';
+  r.pa_dudosos = undefined;
+  r.pa_ultimo_dudoso = undefined;
+  udSaveRecords(tipo);
+  udActualizarBannerPA(tipo);
+  udRenderHistorial(tipo);
+  udEnviarPendientes(tipo, true);
+}
+function udMarcarComoEnviadaPA(tipo, id){
+  const st = udState[tipo];
+  const r = st.records.find(x=>x.id===id);
+  if(!r) return;
+  r.pa_estado = 'enviado';
+  r.pa_enviado_at = new Date().toISOString();
+  r.pa_dudosos = undefined;
+  r.pa_ultimo_dudoso = undefined;
+  udSaveRecords(tipo);
+  udActualizarBannerPA(tipo);
+  udRenderHistorial(tipo);
 }
 
 function udStorageKey(tipo){ return 'ud_'+tipo+'_records_v1'; }
@@ -4916,6 +5215,9 @@ function udGuardar(tipo){
     observaciones: document.getElementById(tipo+'_fObs').value.trim(),
     firmas_data,
     foto_data: st.fotoData || null,
+    codigo: prevRec ? (prevRec.codigo || udGenerarCodigo(document.getElementById(tipo+'_fFecha').value, identificador)) : udGenerarCodigo(document.getElementById(tipo+'_fFecha').value, identificador),
+    pa_estado: prevRec ? (prevRec.pa_estado || 'pendiente') : 'pendiente',
+    pa_enviado_at: prevRec ? prevRec.pa_enviado_at : undefined,
     created_at: prevRec ? (prevRec.created_at || new Date().toISOString()) : new Date().toISOString(),
     updated_at: new Date().toISOString(),
   };
@@ -4934,14 +5236,21 @@ function udGuardar(tipo){
   udResetForm(tipo);
   toast(wasEditing ? 'Cambios guardados ✓' : 'Guardado en este celular ✓ — '+identificador);
   udRenderHistorial(tipo);
+  udActualizarBannerPA(tipo);
+  udEnviarPendientes(tipo);
 }
 
 function udEliminar(tipo, id){
-  if(!confirm('¿Eliminar esta inspección guardada en el celular? No se puede deshacer.')) return;
   const st = udState[tipo];
+  const r = st.records.find(x=>x.id===id);
+  const msg = (r && (udEstaPendienteEnvio(r) || udEstaPorRevisarEnvio(r)))
+    ? '⚠️ Esta inspección NO está confirmada en el Excel central. Si la eliminas, puede perderse por completo. ¿Eliminar de todas formas?'
+    : '¿Eliminar esta inspección guardada en el celular? No se puede deshacer.';
+  if(!confirm(msg)) return;
   st.records = st.records.filter(r=>r.id!==id);
   udSaveRecords(tipo);
   udRenderHistorial(tipo);
+  udActualizarBannerPA(tipo);
   toast('Eliminado');
 }
 
@@ -5033,6 +5342,7 @@ function udRenderHistorial(tipo){
         ${d.observaciones ? `<div class="hist-obs">"${escapeHtml(d.observaciones)}"</div>` : ''}
         ${(d.acciones&&d.acciones.length>0) ? `<div class="hist-meta">📋 ${d.acciones.length} acción(es) de mejora registrada(s)</div>` : ''}
         <div class="sig-thumbs">${firmasHtml}</div>
+        ${d.pa_estado==='pendiente' ? (st.enviandoId===d.id ? '<div class="hist-badges"><span class="badge warn">📤 Enviando…</span></div>' : '<div class="hist-badges"><span class="badge warn">⏳ Pendiente de enviar</span></div><div class="hist-actions"><button class="btn-edit" data-enviarid="'+d.id+'" type="button">↑ Enviar ahora</button></div>') : d.pa_estado==='revisar' ? '<div class="hist-badges"><span class="badge M">⚠️ Sin confirmar — revisa si está en el Excel</span></div><div class="hist-actions"><button class="btn-edit" data-reenviarid="'+d.id+'" type="button">↻ Reenviar</button><button class="btn-edit" data-okid="'+d.id+'" type="button">✓ Ya está en el Excel</button></div>' : d.pa_estado==='enviado' ? '<div class="hist-badges"><span class="badge ok">✓ Enviada</span></div>' : ''}
         <div class="hist-actions">
           <button class="btn-edit" data-editid="${d.id}" type="button">✏️ Editar</button>
           <button class="btn-del" data-delid="${d.id}" type="button">🗑 Eliminar</button>
@@ -5042,6 +5352,9 @@ function udRenderHistorial(tipo){
   }).join('');
 
   list.querySelectorAll('[data-editid]').forEach(btn=> btn.addEventListener('click', ()=> udEditar(tipo, btn.dataset.editid)));
+  list.querySelectorAll('[data-enviarid]').forEach(btn=> btn.addEventListener('click', ()=> udEnviarPendientes(tipo, true, btn.dataset.enviarid)));
+  list.querySelectorAll('[data-reenviarid]').forEach(btn=> btn.addEventListener('click', ()=> udReenviarRegistroPA(tipo, btn.dataset.reenviarid)));
+  list.querySelectorAll('[data-okid]').forEach(btn=> btn.addEventListener('click', ()=> udMarcarComoEnviadaPA(tipo, btn.dataset.okid)));
   list.querySelectorAll('[data-delid]').forEach(btn=> btn.addEventListener('click', ()=> udEliminar(tipo, btn.dataset.delid)));
 }
 
@@ -5189,7 +5502,7 @@ async function udExportarExcel(tipo){
 
 function udInit(tipo){
   const cfg = UNIDAD_CONFIGS[tipo];
-  udState[tipo] = {records:[], editingId:null, sigPads:{}, fotoData:null, itemState:{}};
+  udState[tipo] = {records:[], editingId:null, sigPads:{}, fotoData:null, itemState:{}, enviandoPA:false, enviandoId:null};
   const screen = document.getElementById('screen-'+tipo);
   screen.innerHTML = udRenderScreenHtml(tipo, cfg);
   document.getElementById(tipo+'_fFecha').value = new Date().toISOString().slice(0,10);
@@ -5206,8 +5519,19 @@ function udInit(tipo){
   document.getElementById(tipo+'_btnExport').addEventListener('click', ()=>udExportarExcel(tipo));
   document.getElementById(tipo+'_filFecha').addEventListener('change', ()=>udRenderHistorial(tipo));
   document.getElementById(tipo+'_filTexto').addEventListener('input', ()=>udRenderHistorial(tipo));
+  document.getElementById(tipo+'_btnReenviar').addEventListener('click', ()=>udEnviarPendientes(tipo, true));
   udSaveRecords(tipo);
   udRenderHistorial(tipo);
+
+  udActualizarBannerPA(tipo);
+  window.addEventListener('online', ()=>{ udActualizarBannerPA(tipo); udEnviarPendientes(tipo); });
+  window.addEventListener('offline', ()=> udActualizarBannerPA(tipo));
+  window.addEventListener('storage', (e)=>{
+    if(e.key === udStorageKey(tipo)){ udLoadRecords(tipo); udRenderHistorial(tipo); udActualizarBannerPA(tipo); }
+  });
+  document.addEventListener('visibilitychange', ()=>{ if(!document.hidden) udEnviarPendientes(tipo); });
+  setInterval(()=>{ if(udContarPendientesEnvio(tipo)>0) udEnviarPendientes(tipo); }, 60000);
+  udEnviarPendientes(tipo);
 }
 
 
@@ -5224,6 +5548,7 @@ function udInit(tipo){
   ['zorrillos','vagones','tractores','herramientas'].forEach(udInit);
   ['locativa','rotulos','kitderrames'].forEach(udInit);
   ['vehiculo','motos','bus'].forEach(udInit);
+  ['bicicletas'].forEach(udInit);
   setupHomeNav();
   mostrarPantalla('screen-home');
   if('serviceWorker' in navigator){
