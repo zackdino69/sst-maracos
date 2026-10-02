@@ -843,7 +843,12 @@
     </div>
   </header>
 
-  <div class="local-note">📱 Todo se guarda solo en este celular. Exporta a Excel seguido y envíalo por Teams.</div>
+  <div class="local-note">📱 Cada inspección se guarda en este celular y se envía sola al Excel central cuando hay señal. También puedes exportar a Excel desde el Historial.</div>
+
+  <div id="ext_paBanner" class="pa-banner hidden">
+    <span id="ext_paBannerText"></span>
+    <button type="button" id="ext_btnReenviar">Reenviar ahora</button>
+  </div>
 
   <!-- ===================== TAB: NUEVA ===================== -->
   <div id="ext_tab-nueva" data-tabpanel="nueva" class="section">
@@ -2906,6 +2911,159 @@ function extResetForm(){
 }
 
 // ---------- guardar ----------
+const EXT_PA_WEBHOOK_URL = ''; // se completa cuando el flujo de Extintores esté listo
+const EXT_PA_TIMEOUT_MS = 100000;
+const EXT_PA_ENFRIAMIENTO_MS = 10*60*1000;
+const EXT_PA_MAX_DUDOSOS = 2;
+let extEnviandoPA = false;
+let extEnviandoId = null;
+
+function extGenerarCodigo(fecha, identificador){
+  const f = (fecha||hoyISO()).replace(/-/g,'');
+  const c = (identificador||'sinid').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'').slice(0,20) || 'sinid';
+  const now = new Date();
+  const hhmmss = String(now.getHours()).padStart(2,'0') + String(now.getMinutes()).padStart(2,'0') + String(now.getSeconds()).padStart(2,'0');
+  return f+'-'+c+'-'+hhmmss;
+}
+
+function extEstaPendiente(r){ return r.pa_estado === 'pendiente'; }
+function extEstaPorRevisar(r){ return r.pa_estado === 'revisar'; }
+function extContarPendientes(){ return extRecords.filter(extEstaPendiente).length; }
+function extContarPorRevisar(){ return extRecords.filter(extEstaPorRevisar).length; }
+
+function extActualizarBannerPA(){
+  const n = extContarPendientes(), m = extContarPorRevisar();
+  const banner = document.getElementById('ext_paBanner');
+  const texto = document.getElementById('ext_paBannerText');
+  if(n===0 && m===0){ banner.classList.add('hidden'); return; }
+  banner.classList.remove('hidden');
+  const partes = [];
+  if(n>0) partes.push(navigator.onLine
+    ? '⏳ '+n+' inspección(es) por enviar al Excel central'
+    : '📴 Sin señal — '+n+' inspección(es) esperan para enviarse');
+  if(m>0) partes.push('⚠️ '+m+' sin confirmar: revisa si están en el Excel');
+  texto.textContent = partes.join(' · ');
+}
+
+async function extIntentarEnvioPA(record){
+  const payload = {
+    codigo: record.codigo_inspeccion,
+    fecha: record.fecha,
+    plantacion: record.plantacion,
+    mes: record.mes,
+    codigo_extintor: record.codigo,
+    ubicacion: record.ubicacion,
+    tipo: TIPO_LABEL[record.tipo] || record.tipo,
+    clasificacion: record.clasificacion,
+    capacidad: record.capacidad,
+    vencimiento: record.vencimiento,
+    responsable: record.responsable,
+    observaciones: record.observaciones,
+    firma_responsable: soloBase64(record.firma_data),
+    fotos: record.foto_data ? [soloBase64(record.foto_data)] : [],
+    renglones: (record.estado||[]).map(e=>({ detalle: e.item, estado: e.calificacion })),
+  };
+  const ctrl = new AbortController();
+  const timer = setTimeout(()=>ctrl.abort(), EXT_PA_TIMEOUT_MS);
+  try{
+    await fetch(EXT_PA_WEBHOOK_URL, {
+      method: 'POST', mode: 'no-cors', headers: {'Content-Type': 'text/plain'},
+      body: JSON.stringify(payload), signal: ctrl.signal,
+    });
+    return 'ok';
+  }catch(e){
+    console.error('Envío a Power Automate:', e);
+    return (e && e.name === 'AbortError') ? 'tiempo' : 'red';
+  }finally{
+    clearTimeout(timer);
+  }
+}
+
+async function extPasadaDeEnvio(manual, soloId){
+  extLoadRecords();
+  const ahora = Date.now();
+  const cola = extRecords.filter(extEstaPendiente)
+    .filter(r => !soloId || r.id === soloId)
+    .filter(r => manual || !r.pa_ultimo_dudoso || (ahora - r.pa_ultimo_dudoso) > EXT_PA_ENFRIAMIENTO_MS)
+    .sort((a,b)=> (a.created_at||'').localeCompare(b.created_at||''));
+  let enviadas = 0, dudosas = 0;
+  for(const r of cola){
+    const actual = extRecords.find(x=>x.id===r.id);
+    if(!actual || !extEstaPendiente(actual)) continue;
+    extEnviandoId = actual.id;
+    extRenderHistorial();
+    const res = await extIntentarEnvioPA(actual);
+    extEnviandoId = null;
+    if(res === 'red') break;
+    const vigente = extRecords.find(x=>x.id===r.id);
+    if(!vigente) continue;
+    if(res === 'ok'){
+      vigente.pa_estado = 'enviado';
+      vigente.pa_enviado_at = new Date().toISOString();
+      vigente.pa_dudosos = undefined;
+      vigente.pa_ultimo_dudoso = undefined;
+      enviadas++;
+    }else{
+      vigente.pa_dudosos = (vigente.pa_dudosos||0) + 1;
+      vigente.pa_ultimo_dudoso = Date.now();
+      if(vigente.pa_dudosos >= EXT_PA_MAX_DUDOSOS) vigente.pa_estado = 'revisar';
+      dudosas++;
+    }
+    extSaveRecords();
+  }
+  if(enviadas>0) toast('✓ '+enviadas+' inspección(es) enviada(s)');
+  else if(dudosas>0) toast('⚠️ El flujo tardó en contestar: se revisará en unos minutos');
+}
+
+async function extEnviarPendientes(manual, soloId){
+  if(!EXT_PA_WEBHOOK_URL) return;
+  if(extEnviandoPA){ if(manual) toast('Ya hay un envío en curso, espera un momento'); return; }
+  if(!navigator.onLine){
+    if(manual) toast('Sin señal: se enviará solo cuando vuelva');
+    extActualizarBannerPA();
+    return;
+  }
+  extEnviandoPA = true;
+  try{
+    if(typeof navigator.locks !== 'undefined' && navigator.locks.request){
+      await navigator.locks.request('ext-envio-pa', {ifAvailable:true}, async (lock)=>{
+        if(!lock){ if(manual) toast('Otra ventana está enviando, espera un momento'); return; }
+        await extPasadaDeEnvio(manual === true, soloId);
+      });
+    }else{
+      await extPasadaDeEnvio(manual === true, soloId);
+    }
+  }finally{
+    extEnviandoPA = false;
+    extEnviandoId = null;
+    extActualizarBannerPA();
+    extRenderHistorial();
+  }
+}
+
+function extReenviarRegistro(id){
+  const r = extRecords.find(x=>x.id===id);
+  if(!r) return;
+  r.pa_estado = 'pendiente';
+  r.pa_dudosos = undefined;
+  r.pa_ultimo_dudoso = undefined;
+  extSaveRecords();
+  extActualizarBannerPA();
+  extRenderHistorial();
+  extEnviarPendientes(true);
+}
+function extMarcarComoEnviada(id){
+  const r = extRecords.find(x=>x.id===id);
+  if(!r) return;
+  r.pa_estado = 'enviado';
+  r.pa_enviado_at = new Date().toISOString();
+  r.pa_dudosos = undefined;
+  r.pa_ultimo_dudoso = undefined;
+  extSaveRecords();
+  extActualizarBannerPA();
+  extRenderHistorial();
+}
+
 function guardarExtintor(){
   const responsable = document.getElementById('ext_fResponsable').value.trim();
   const codigo = document.getElementById('ext_fCodigo').value.trim();
@@ -2941,6 +3099,9 @@ function guardarExtintor(){
     observaciones: document.getElementById('ext_fObs').value.trim(),
     firma_data: extSigPads.responsable.toDataURL(),
     foto_data: extPhotoDataUrl,
+    codigo_inspeccion: extEditingId ? (extRecords.find(r=>r.id===extEditingId)?.codigo_inspeccion || extGenerarCodigo(document.getElementById('ext_fFecha').value, codigo)) : extGenerarCodigo(document.getElementById('ext_fFecha').value, codigo),
+    pa_estado: extEditingId ? (extRecords.find(r=>r.id===extEditingId)?.pa_estado || 'pendiente') : 'pendiente',
+    pa_enviado_at: extEditingId ? extRecords.find(r=>r.id===extEditingId)?.pa_enviado_at : undefined,
     created_at: extEditingId ? (extRecords.find(r=>r.id===extEditingId)?.created_at || new Date().toISOString()) : new Date().toISOString(),
     updated_at: new Date().toISOString(),
   };
@@ -2960,6 +3121,8 @@ function guardarExtintor(){
   extResetForm();
   toast(wasEditing ? 'Cambios guardados ✓' : 'Guardado en este celular ✓ — '+record.codigo);
   extRenderHistorial();
+  extActualizarBannerPA();
+  extEnviarPendientes();
 }
 
 function contarMalos(record){ return (record.estado||[]).filter(e=>e.calificacion==='M').length; }
@@ -3021,6 +3184,7 @@ function extRenderHistorial(){
         ${badges ? `<div class="hist-badges">${badges}</div>` : ''}
         ${d.observaciones ? `<div class="hist-meta" style="font-style:italic;margin-top:6px;">"${escapeHtml(d.observaciones)}"</div>` : ''}
         <div class="sig-thumb"><div class="lbl">Firma</div>${d.firma_data?`<img src="${d.firma_data}">`:'—'}</div>
+        ${d.pa_estado==='pendiente' ? (extEnviandoId===d.id ? '<div class="hist-badges"><span class="badge warn">📤 Enviando…</span></div>' : '<div class="hist-badges"><span class="badge warn">⏳ Pendiente de enviar</span></div><div class="hist-actions"><button class="btn-edit" data-enviarid="'+d.id+'" type="button">↑ Enviar ahora</button></div>') : d.pa_estado==='revisar' ? '<div class="hist-badges"><span class="badge M">⚠️ Sin confirmar — revisa si está en el Excel</span></div><div class="hist-actions"><button class="btn-edit" data-reenviarid="'+d.id+'" type="button">↻ Reenviar</button><button class="btn-edit" data-okid="'+d.id+'" type="button">✓ Ya está en el Excel</button></div>' : d.pa_estado==='enviado' ? '<div class="hist-badges"><span class="badge ok">✓ Enviada</span></div>' : ''}
         <div class="hist-actions">
           <button class="btn-edit" data-editid="${d.id}" type="button">✏️ Editar</button>
           <button class="btn-del" data-delid="${d.id}" type="button">🗑 Eliminar</button>
@@ -3030,16 +3194,24 @@ function extRenderHistorial(){
   }).join('');
 
   list.querySelectorAll('[data-editid]').forEach(btn=> btn.addEventListener('click', ()=> extEditarRegistro(btn.dataset.editid)));
+  list.querySelectorAll('[data-enviarid]').forEach(btn=> btn.addEventListener('click', ()=> extEnviarPendientes(true, btn.dataset.enviarid)));
+  list.querySelectorAll('[data-reenviarid]').forEach(btn=> btn.addEventListener('click', ()=> extReenviarRegistro(btn.dataset.reenviarid)));
+  list.querySelectorAll('[data-okid]').forEach(btn=> btn.addEventListener('click', ()=> extMarcarComoEnviada(btn.dataset.okid)));
   list.querySelectorAll('[data-delid]').forEach(btn=> btn.addEventListener('click', ()=> extEliminarRegistro(btn.dataset.delid)));
 }
 
 
 
 function extEliminarRegistro(id){
-  if(!confirm('¿Eliminar esta inspección guardada en el celular? No se puede deshacer.')) return;
+  const r = extRecords.find(x=>x.id===id);
+  const msg = (r && (extEstaPendiente(r) || extEstaPorRevisar(r)))
+    ? '⚠️ Esta inspección NO está confirmada en el Excel central. Si la eliminas, puede perderse por completo. ¿Eliminar de todas formas?'
+    : '¿Eliminar esta inspección guardada en el celular? No se puede deshacer.';
+  if(!confirm(msg)) return;
   extRecords = extRecords.filter(r=>r.id!==id);
   extSaveRecords();
   extRenderHistorial();
+  extActualizarBannerPA();
   toast('Eliminado');
 }
 
@@ -3255,9 +3427,19 @@ function initExt(){
   document.getElementById('ext_btnExport').addEventListener('click', extExportarExcel);
   document.getElementById('ext_filFecha').addEventListener('change', extRenderHistorial);
   document.getElementById('ext_filTexto').addEventListener('input', extRenderHistorial);
+  document.getElementById('ext_btnReenviar').addEventListener('click', ()=> extEnviarPendientes(true));
   extSaveRecords();
   extRenderHistorial();
 
+  extActualizarBannerPA();
+  window.addEventListener('online', ()=>{ extActualizarBannerPA(); extEnviarPendientes(); });
+  window.addEventListener('offline', extActualizarBannerPA);
+  window.addEventListener('storage', (e)=>{
+    if(e.key === EXT_RECORDS_KEY){ extLoadRecords(); extRenderHistorial(); extActualizarBannerPA(); }
+  });
+  document.addEventListener('visibilitychange', ()=>{ if(!document.hidden) extEnviarPendientes(); });
+  setInterval(()=>{ if(extContarPendientes()>0) extEnviarPendientes(); }, 60000);
+  extEnviarPendientes();
 }
 
 
@@ -3270,6 +3452,7 @@ function initExt(){
 
 const EQUIPO_CONFIGS = {
   guadana: {
+    paWebhookUrl: '', // se completa cuando el flujo de guadana esté listo
     titulo: 'Guadaña', codigo: 'FT-SST-009',
     subtitulo: 'Equipo, cuchilla y aspectos del trabajador',
     campos: [],
@@ -3303,6 +3486,7 @@ const EQUIPO_CONFIGS = {
     ],
   },
   bombaespalda: {
+    paWebhookUrl: '', // se completa cuando el flujo de bombaespalda esté listo
     titulo: 'Bomba de espalda', codigo: 'SST-FT-010',
     subtitulo: 'Fumigadora manual — equipo y trabajador',
     campos: [
@@ -3322,6 +3506,7 @@ const EQUIPO_CONFIGS = {
     ],
   },
   bombainsufladora: {
+    paWebhookUrl: '', // se completa cuando el flujo de bombainsufladora esté listo
     titulo: 'Bomba insufladora', codigo: '',
     subtitulo: 'Equipo de aplicación de polvo',
     campos: [
@@ -3341,6 +3526,7 @@ const EQUIPO_CONFIGS = {
     ],
   },
   motosierra: {
+    paWebhookUrl: '', // se completa cuando el flujo de motosierra esté listo
     titulo: 'Motosierra', codigo: 'FT-SST-014',
     subtitulo: 'Motor, sistema de corte y trabajador',
     campos: [],
@@ -3363,6 +3549,7 @@ const EQUIPO_CONFIGS = {
     ],
   },
   alturas: {
+    paWebhookUrl: '', // se completa cuando el flujo de alturas esté listo
     titulo: 'Equipo para trabajo en alturas', codigo: 'FT-SST-011',
     subtitulo: 'Arnés, eslingas, mosquetones y línea de vida',
     campos: [
@@ -3400,7 +3587,11 @@ function eqpRenderScreenHtml(tipo, cfg){
       <label>${c.label}</label>
       <input type="text" id="${tipo}_c_${c.id}">`).join('');
   return `
-    <div class="local-note">📱 Cada inspección se guarda en este celular. Exporta a Excel desde el Historial.</div>
+    <div class="local-note">📱 Cada inspección se guarda en este celular y se envía sola al Excel central cuando hay señal. También puedes exportar a Excel desde el Historial.</div>
+    <div id="${tipo}_paBanner" class="pa-banner hidden">
+      <span id="${tipo}_paBannerText"></span>
+      <button type="button" id="${tipo}_btnReenviar">Reenviar ahora</button>
+    </div>
     <header class="top">
       <button class="back-btn" type="button" data-volver>← Menú</button>
       <h1>${cfg.titulo}${cfg.codigo ? ' · '+cfg.codigo : ''}</h1>
@@ -3606,6 +3797,175 @@ function eqpShowRecap(tipo, record){
   wrap.prepend(chip);
 }
 
+// ---------- envío a Power Automate, compartido por todos los tipos de este motor ----------
+const EQP_PA_TIMEOUT_MS = 100000;
+const EQP_PA_ENFRIAMIENTO_MS = 10*60*1000;
+const EQP_PA_MAX_DUDOSOS = 2;
+
+function eqpGenerarCodigo(fecha, identificador){
+  const f = (fecha||hoyISO()).replace(/-/g,'');
+  const c = (identificador||'sinid').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'').slice(0,20) || 'sinid';
+  const now = new Date();
+  const hhmmss = String(now.getHours()).padStart(2,'0') + String(now.getMinutes()).padStart(2,'0') + String(now.getSeconds()).padStart(2,'0');
+  return f+'-'+c+'-'+hhmmss;
+}
+
+function eqpEstaPendiente(r){ return r.pa_estado === 'pendiente'; }
+function eqpEstaPorRevisar(r){ return r.pa_estado === 'revisar'; }
+function eqpContarPendientes(tipo){ return eqpState[tipo].records.filter(eqpEstaPendiente).length; }
+function eqpContarPorRevisar(tipo){ return eqpState[tipo].records.filter(eqpEstaPorRevisar).length; }
+
+function eqpActualizarBannerPA(tipo){
+  const n = eqpContarPendientes(tipo), m = eqpContarPorRevisar(tipo);
+  const banner = document.getElementById(tipo+'_paBanner');
+  const texto = document.getElementById(tipo+'_paBannerText');
+  if(n===0 && m===0){ banner.classList.add('hidden'); return; }
+  banner.classList.remove('hidden');
+  const partes = [];
+  if(n>0) partes.push(navigator.onLine
+    ? '⏳ '+n+' inspección(es) por enviar al Excel central'
+    : '📴 Sin señal — '+n+' inspección(es) esperan para enviarse');
+  if(m>0) partes.push('⚠️ '+m+' sin confirmar: revisa si están en el Excel');
+  texto.textContent = partes.join(' · ');
+}
+
+// Junta el checklist del equipo y las preguntas del trabajador en una sola
+// lista de "renglones" — así el flujo de Power Automate solo necesita UN
+// ciclo y UNA hoja de Excel, no dos.
+function eqpArmarRenglones(record){
+  const renglones = [];
+  (record.items||[]).forEach(it=>{
+    renglones.push({ seccion: 'Equipo', detalle: it.aspecto, estado: it.estado || '', observacion: it.observacion || '' });
+  });
+  (record.preguntas||[]).forEach(p=>{
+    renglones.push({ seccion: 'Trabajador', detalle: p.pregunta, estado: p.respuesta || '', observacion: '' });
+  });
+  return renglones;
+}
+
+async function eqpIntentarEnvioPA(tipo, record){
+  const cfg = EQUIPO_CONFIGS[tipo];
+  const campos = {};
+  cfg.campos.forEach(c=>{ campos[c.id] = (record.campos||{})[c.id] || ''; });
+  const payload = {
+    codigo: record.codigo,
+    fecha: record.fecha,
+    trabajador: record.trabajador,
+    labor: record.labor,
+    responsable: record.responsable,
+    campos,
+    observaciones: record.observaciones,
+    firma_trabajador: soloBase64(record.firma_trabajador_data),
+    firma_responsable: soloBase64(record.firma_responsable_data),
+    fotos: record.foto_data ? [soloBase64(record.foto_data)] : [],
+    renglones: eqpArmarRenglones(record),
+  };
+  const ctrl = new AbortController();
+  const timer = setTimeout(()=>ctrl.abort(), EQP_PA_TIMEOUT_MS);
+  try{
+    await fetch(cfg.paWebhookUrl, {
+      method: 'POST', mode: 'no-cors', headers: {'Content-Type': 'text/plain'},
+      body: JSON.stringify(payload), signal: ctrl.signal,
+    });
+    return 'ok';
+  }catch(e){
+    console.error('Envío a Power Automate ('+tipo+'):', e);
+    return (e && e.name === 'AbortError') ? 'tiempo' : 'red';
+  }finally{
+    clearTimeout(timer);
+  }
+}
+
+async function eqpPasadaDeEnvio(tipo, manual, soloId){
+  const st = eqpState[tipo];
+  eqpLoadRecords(tipo);
+  const ahora = Date.now();
+  const cola = st.records.filter(eqpEstaPendiente)
+    .filter(r => !soloId || r.id === soloId)
+    .filter(r => manual || !r.pa_ultimo_dudoso || (ahora - r.pa_ultimo_dudoso) > EQP_PA_ENFRIAMIENTO_MS)
+    .sort((a,b)=> (a.created_at||'').localeCompare(b.created_at||''));
+  let enviadas = 0, dudosas = 0;
+  for(const r of cola){
+    const actual = st.records.find(x=>x.id===r.id);
+    if(!actual || !eqpEstaPendiente(actual)) continue;
+    st.enviandoId = actual.id;
+    eqpRenderHistorial(tipo);
+    const res = await eqpIntentarEnvioPA(tipo, actual);
+    st.enviandoId = null;
+    if(res === 'red') break;
+    const vigente = st.records.find(x=>x.id===r.id);
+    if(!vigente) continue;
+    if(res === 'ok'){
+      vigente.pa_estado = 'enviado';
+      vigente.pa_enviado_at = new Date().toISOString();
+      vigente.pa_dudosos = undefined;
+      vigente.pa_ultimo_dudoso = undefined;
+      enviadas++;
+    }else{
+      vigente.pa_dudosos = (vigente.pa_dudosos||0) + 1;
+      vigente.pa_ultimo_dudoso = Date.now();
+      if(vigente.pa_dudosos >= EQP_PA_MAX_DUDOSOS) vigente.pa_estado = 'revisar';
+      dudosas++;
+    }
+    eqpSaveRecords(tipo);
+  }
+  if(enviadas>0) toast('✓ '+enviadas+' inspección(es) enviada(s)');
+  else if(dudosas>0) toast('⚠️ El flujo tardó en contestar: se revisará en unos minutos');
+}
+
+async function eqpEnviarPendientes(tipo, manual, soloId){
+  const cfg = EQUIPO_CONFIGS[tipo];
+  const st = eqpState[tipo];
+  if(!cfg.paWebhookUrl) return;
+  if(st.enviandoPA){ if(manual) toast('Ya hay un envío en curso, espera un momento'); return; }
+  if(!navigator.onLine){
+    if(manual) toast('Sin señal: se enviará solo cuando vuelva');
+    eqpActualizarBannerPA(tipo);
+    return;
+  }
+  st.enviandoPA = true;
+  try{
+    if(typeof navigator.locks !== 'undefined' && navigator.locks.request){
+      await navigator.locks.request(tipo+'-envio-pa', {ifAvailable:true}, async (lock)=>{
+        if(!lock){ if(manual) toast('Otra ventana está enviando, espera un momento'); return; }
+        await eqpPasadaDeEnvio(tipo, manual === true, soloId);
+      });
+    }else{
+      await eqpPasadaDeEnvio(tipo, manual === true, soloId);
+    }
+  }finally{
+    st.enviandoPA = false;
+    st.enviandoId = null;
+    eqpActualizarBannerPA(tipo);
+    eqpRenderHistorial(tipo);
+  }
+}
+
+function eqpReenviarRegistro(tipo, id){
+  const st = eqpState[tipo];
+  const r = st.records.find(x=>x.id===id);
+  if(!r) return;
+  r.pa_estado = 'pendiente';
+  r.pa_dudosos = undefined;
+  r.pa_ultimo_dudoso = undefined;
+  eqpSaveRecords(tipo);
+  eqpActualizarBannerPA(tipo);
+  eqpRenderHistorial(tipo);
+  eqpEnviarPendientes(tipo, true);
+}
+function eqpMarcarComoEnviada(tipo, id){
+  const st = eqpState[tipo];
+  const r = st.records.find(x=>x.id===id);
+  if(!r) return;
+  r.pa_estado = 'enviado';
+  r.pa_enviado_at = new Date().toISOString();
+  r.pa_dudosos = undefined;
+  r.pa_ultimo_dudoso = undefined;
+  eqpSaveRecords(tipo);
+  eqpActualizarBannerPA(tipo);
+  eqpRenderHistorial(tipo);
+}
+
 function eqpGuardar(tipo){
   const cfg = EQUIPO_CONFIGS[tipo];
   const st = eqpState[tipo];
@@ -3650,6 +4010,9 @@ function eqpGuardar(tipo){
     firma_trabajador_data: st.sigPads.trabajador.toDataURL(),
     firma_responsable_data: st.sigPads.responsable.toDataURL(),
     foto_data: st.fotoData || null,
+    codigo: prevRec ? (prevRec.codigo || eqpGenerarCodigo(document.getElementById(tipo+'_fFecha').value, trabajador)) : eqpGenerarCodigo(document.getElementById(tipo+'_fFecha').value, trabajador),
+    pa_estado: prevRec ? (prevRec.pa_estado || 'pendiente') : 'pendiente',
+    pa_enviado_at: prevRec ? prevRec.pa_enviado_at : undefined,
     created_at: prevRec ? (prevRec.created_at || new Date().toISOString()) : new Date().toISOString(),
     updated_at: new Date().toISOString(),
   };
@@ -3668,14 +4031,21 @@ function eqpGuardar(tipo){
   eqpResetForm(tipo);
   toast(wasEditing ? 'Cambios guardados ✓' : 'Guardado en este celular ✓ — '+trabajador);
   eqpRenderHistorial(tipo);
+  eqpActualizarBannerPA(tipo);
+  eqpEnviarPendientes(tipo);
 }
 
 function eqpEliminar(tipo, id){
-  if(!confirm('¿Eliminar esta inspección guardada en el celular? No se puede deshacer.')) return;
   const st = eqpState[tipo];
+  const r = st.records.find(x=>x.id===id);
+  const msg = (r && (eqpEstaPendiente(r) || eqpEstaPorRevisar(r)))
+    ? '⚠️ Esta inspección NO está confirmada en el Excel central. Si la eliminas, puede perderse por completo. ¿Eliminar de todas formas?'
+    : '¿Eliminar esta inspección guardada en el celular? No se puede deshacer.';
+  if(!confirm(msg)) return;
   st.records = st.records.filter(r=>r.id!==id);
   eqpSaveRecords(tipo);
   eqpRenderHistorial(tipo);
+  eqpActualizarBannerPA(tipo);
   toast('Eliminado');
 }
 
@@ -3767,6 +4137,7 @@ function eqpRenderHistorial(tipo){
           <div class="sig-thumb"><div class="lbl">Trabajador</div>${d.firma_trabajador_data?`<img src="${d.firma_trabajador_data}">`:'—'}</div>
           <div class="sig-thumb"><div class="lbl">Responsable</div>${d.firma_responsable_data?`<img src="${d.firma_responsable_data}">`:'—'}</div>
         </div>
+        ${d.pa_estado==='pendiente' ? (st.enviandoId===d.id ? '<div class="hist-badges"><span class="badge warn">📤 Enviando…</span></div>' : '<div class="hist-badges"><span class="badge warn">⏳ Pendiente de enviar</span></div><div class="hist-actions"><button class="btn-edit" data-enviarid="'+d.id+'" type="button">↑ Enviar ahora</button></div>') : d.pa_estado==='revisar' ? '<div class="hist-badges"><span class="badge M">⚠️ Sin confirmar — revisa si está en el Excel</span></div><div class="hist-actions"><button class="btn-edit" data-reenviarid="'+d.id+'" type="button">↻ Reenviar</button><button class="btn-edit" data-okid="'+d.id+'" type="button">✓ Ya está en el Excel</button></div>' : d.pa_estado==='enviado' ? '<div class="hist-badges"><span class="badge ok">✓ Enviada</span></div>' : ''}
         <div class="hist-actions">
           <button class="btn-edit" data-editid="${d.id}" type="button">✏️ Editar</button>
           <button class="btn-del" data-delid="${d.id}" type="button">🗑 Eliminar</button>
@@ -3776,6 +4147,9 @@ function eqpRenderHistorial(tipo){
   }).join('');
 
   list.querySelectorAll('[data-editid]').forEach(btn=> btn.addEventListener('click', ()=> eqpEditar(tipo, btn.dataset.editid)));
+  list.querySelectorAll('[data-enviarid]').forEach(btn=> btn.addEventListener('click', ()=> eqpEnviarPendientes(tipo, true, btn.dataset.enviarid)));
+  list.querySelectorAll('[data-reenviarid]').forEach(btn=> btn.addEventListener('click', ()=> eqpReenviarRegistro(tipo, btn.dataset.reenviarid)));
+  list.querySelectorAll('[data-okid]').forEach(btn=> btn.addEventListener('click', ()=> eqpMarcarComoEnviada(tipo, btn.dataset.okid)));
   list.querySelectorAll('[data-delid]').forEach(btn=> btn.addEventListener('click', ()=> eqpEliminar(tipo, btn.dataset.delid)));
 }
 
@@ -3921,7 +4295,7 @@ async function eqpExportarExcel(tipo){
 
 function eqpInit(tipo){
   const cfg = EQUIPO_CONFIGS[tipo];
-  eqpState[tipo] = {records:[], editingId:null, sigPads:{}, fotoData:null, itemState:{}, preguntaState:{}};
+  eqpState[tipo] = {records:[], editingId:null, sigPads:{}, fotoData:null, itemState:{}, preguntaState:{}, enviandoPA:false, enviandoId:null};
   const screen = document.getElementById('screen-'+tipo);
   screen.innerHTML = eqpRenderScreenHtml(tipo, cfg);
   document.getElementById(tipo+'_fFecha').value = new Date().toISOString().slice(0,10);
@@ -3937,8 +4311,19 @@ function eqpInit(tipo){
   document.getElementById(tipo+'_btnExport').addEventListener('click', ()=>eqpExportarExcel(tipo));
   document.getElementById(tipo+'_filFecha').addEventListener('change', ()=>eqpRenderHistorial(tipo));
   document.getElementById(tipo+'_filTexto').addEventListener('input', ()=>eqpRenderHistorial(tipo));
+  document.getElementById(tipo+'_btnReenviar').addEventListener('click', ()=>eqpEnviarPendientes(tipo, true));
   eqpSaveRecords(tipo);
   eqpRenderHistorial(tipo);
+
+  eqpActualizarBannerPA(tipo);
+  window.addEventListener('online', ()=>{ eqpActualizarBannerPA(tipo); eqpEnviarPendientes(tipo); });
+  window.addEventListener('offline', ()=> eqpActualizarBannerPA(tipo));
+  window.addEventListener('storage', (e)=>{
+    if(e.key === eqpStorageKey(tipo)){ eqpLoadRecords(tipo); eqpRenderHistorial(tipo); eqpActualizarBannerPA(tipo); }
+  });
+  document.addEventListener('visibilitychange', ()=>{ if(!document.hidden) eqpEnviarPendientes(tipo); });
+  setInterval(()=>{ if(eqpContarPendientes(tipo)>0) eqpEnviarPendientes(tipo); }, 60000);
+  eqpEnviarPendientes(tipo);
 }
 
 
