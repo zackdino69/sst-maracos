@@ -1952,7 +1952,7 @@ function initEpp(){
   window.addEventListener('offline', eppActualizarBannerPA);
   document.addEventListener('visibilitychange', ()=>{ if(!document.hidden) eppEnviarPendientes(); });
   setInterval(()=>{ if(eppContarPendientes()>0) eppEnviarPendientes(); }, 60000);
-  eppEnviarPendientes();
+  setTimeout(eppEnviarPendientes, 0);
 
 }
 
@@ -2800,7 +2800,7 @@ function initBot(){
   });
   document.addEventListener('visibilitychange', ()=>{ if(!document.hidden) botEnviarPendientes(); });
   setInterval(()=>{ if(botContarPendientes()>0) botEnviarPendientes(); }, 60000);
-  botEnviarPendientes();
+  setTimeout(botEnviarPendientes, 0);
 
 }
 
@@ -2942,7 +2942,7 @@ function extResetForm(){
 }
 
 // ---------- guardar ----------
-const EXT_PA_WEBHOOK_URL = ''; // se completa cuando el flujo de Extintores esté listo
+const EXT_PA_WEBHOOK_URL = 'https://defaultc30619979f9e4ad6a335e5e17e5f19.4a.environment.api.powerplatform.com:443/powerautomate/automations/direct/cu/11/workflows/0c777909a1fb44c2933e7e2e06117de7/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=WNl_bu0zsZQIqdwjWbehNGiHgQxvHCYPW70DBh1F0Rg';
 const EXT_PA_TIMEOUT_MS = 100000;
 const EXT_PA_ENFRIAMIENTO_MS = 10*60*1000;
 const EXT_PA_MAX_DUDOSOS = 2;
@@ -3470,7 +3470,7 @@ function initExt(){
   });
   document.addEventListener('visibilitychange', ()=>{ if(!document.hidden) extEnviarPendientes(); });
   setInterval(()=>{ if(extContarPendientes()>0) extEnviarPendientes(); }, 60000);
-  extEnviarPendientes();
+  setTimeout(extEnviarPendientes, 0);
 }
 
 
@@ -3483,7 +3483,7 @@ function initExt(){
 
 const EQUIPO_CONFIGS = {
   guadana: {
-    paWebhookUrl: '', // se completa cuando el flujo de guadana esté listo
+    paWebhookUrl: 'https://defaultc30619979f9e4ad6a335e5e17e5f19.4a.environment.api.powerplatform.com:443/powerautomate/automations/direct/cu/15/workflows/5e819212c9d14c00a89846bf101415b5/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=H8rzxVdGsdudN__BmyfTxDPqH_Pxv7nSUj7SVtI-FSc',
     titulo: 'Guadaña', codigo: 'FT-SST-009',
     subtitulo: 'Equipo, cuchilla y aspectos del trabajador',
     campos: [],
@@ -3517,7 +3517,7 @@ const EQUIPO_CONFIGS = {
     ],
   },
   bombaespalda: {
-    paWebhookUrl: '', // se completa cuando el flujo de bombaespalda esté listo
+    paWebhookUrl: 'https://defaultc30619979f9e4ad6a335e5e17e5f19.4a.environment.api.powerplatform.com:443/powerautomate/automations/direct/cu/16/workflows/29c0e1c5ba3a4d6bbc3961bf658589ed/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=Mup-ocVXY5XiY5yBjE0N3PW22hCQMWE9Tq3uVhKuReI',
     titulo: 'Bomba de espalda', codigo: 'SST-FT-010',
     subtitulo: 'Fumigadora manual — equipo y trabajador',
     campos: [
@@ -4413,7 +4413,9 @@ function eqpInit(tipo){
   });
   document.addEventListener('visibilitychange', ()=>{ if(!document.hidden) eqpEnviarPendientes(tipo); });
   setInterval(()=>{ if(eqpContarPendientes(tipo)>0) eqpEnviarPendientes(tipo); }, 60000);
-  eqpEnviarPendientes(tipo);
+  // en un setTimeout, no de una: así el arranque termina primero para los 20 formularios,
+  // y esta primera revisión de pendientes no se cruza con un guardado hecho al instante.
+  setTimeout(()=> eqpEnviarPendientes(tipo), 0);
 }
 
 
@@ -4490,7 +4492,7 @@ const UNIDAD_CONFIGS = {
     titulo: 'Herramientas manuales', codigo: 'FT-SST-013',
     subtitulo: 'Un trabajador por inspección — repite para el siguiente',
     idLabel: 'Nombre del trabajador', idPlaceholder: 'Nombre completo',
-    camposHeader: [{id:'lugar', label:'Lugar / Área'}],
+    camposHeader: [{id:'responsableInspeccion', label:'Responsable de la inspección'}, {id:'lugar', label:'Lugar / Área'}],
     estadoOpciones: ['B','M','NA'],
     items: [
       'Barras / Barretones - Estado general',
@@ -5531,7 +5533,9 @@ function udInit(tipo){
   });
   document.addEventListener('visibilitychange', ()=>{ if(!document.hidden) udEnviarPendientes(tipo); });
   setInterval(()=>{ if(udContarPendientesEnvio(tipo)>0) udEnviarPendientes(tipo); }, 60000);
-  udEnviarPendientes(tipo);
+  // en un setTimeout, no de una: así el arranque termina primero para los 20 formularios,
+  // y esta primera revisión de pendientes no se cruza con un guardado hecho al instante.
+  setTimeout(()=> udEnviarPendientes(tipo), 0);
 }
 
 
