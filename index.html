@@ -494,7 +494,15 @@
           <span class="home-icon" style="background:var(--bad-bg);color:var(--bad);">🩹</span>
           <span class="home-body">
             <span class="home-title">Botiquines</span>
-            <span class="home-desc">Fijos y portátiles — insumos y camilla rígida</span>
+            <span class="home-desc">Fijos y portátiles — insumos y vencimientos</span>
+            <span class="home-code">FT-SST-006</span>
+          </span>
+        </button>
+        <button class="home-card" data-abrir="camilla" type="button">
+          <span class="home-icon" style="background:var(--bad-bg);color:var(--bad);">🚑</span>
+          <span class="home-body">
+            <span class="home-title">Camilla rígida</span>
+            <span class="home-desc">Visible, señalizada, con correas e inmovilizadores</span>
             <span class="home-code">FT-SST-006</span>
           </span>
         </button>
@@ -653,6 +661,7 @@
   <div id="screen-motos" class="screen hidden"></div>
   <div id="screen-bus" class="screen hidden"></div>
   <div id="screen-bicicletas" class="screen hidden"></div>
+  <div id="screen-camilla" class="screen hidden"></div>
   <div id="screen-epp" class="screen hidden">
 <div class="app">
 
@@ -758,7 +767,7 @@
   <header class="top">
     <button class="back-btn" type="button" data-volver>← Menú</button>
     <h1>Inspección Botiquines · FT-SST-006</h1>
-    <p>Botiquines y camilla rígida</p>
+    <p>Botiquines fijos y portátiles</p>
     <div class="tabs">
       <button class="tab active" data-tab="nueva">Nueva inspección</button>
       <button class="tab" data-tab="historial">Historial <span id="bot_histCount" class="count-badge hidden">0</span></button>
@@ -802,11 +811,6 @@
     <div class="card">
       <h2>Elementos del botiquín<small>Cantidad, fecha de vencimiento (si aplica) y observaciones</small></h2>
       <div id="bot_itemsWrap"></div>
-    </div>
-
-    <div class="card">
-      <h2>Camilla rígida</h2>
-      <div id="bot_camillaWrap"></div>
     </div>
 
     <div class="card">
@@ -896,13 +900,8 @@
       <div class="pills" id="ext_tipoPills">
         <div class="pill" data-v="PQS">PQS</div>
         <div class="pill" data-v="CO2">CO2</div>
-        <div class="pill" data-v="SOLKAFLAM">Solkaflam 123</div>
         <div class="pill" data-v="AGUA">Agua</div>
         <div class="pill" data-v="OTROS">Otros</div>
-      </div>
-
-      <label>Clasificación</label>
-      <div class="pills" id="ext_clasifPills">
         <div class="pill" data-v="BC">BC</div>
         <div class="pill" data-v="ABC">ABC</div>
       </div>
@@ -1993,15 +1992,6 @@ const CATEGORIAS = [
     {n:"Manual de primeros auxilios", noVence:true},
   ]},
 ];
-const CAMILLA_PREGUNTAS = [
-  "¿La camilla se encuentra visible?",
-  "¿La camilla es de fácil acceso, sin elementos que la obstruyan?",
-  "¿Se encuentra señalizada?",
-  "¿El soporte se encuentra en buenas condiciones?",
-  "¿Cuenta con correas de seguridad y estas están en buen estado?",
-  "¿Cuenta con sujetadores para agarre?",
-  "¿Cuenta con juego de inmovilizadores de miembro inferior y superior?",
-];
 
 let botRecords = [];
 let botEditingId = null;
@@ -2076,32 +2066,6 @@ function botBuildItems(){
     });
   });
 }
-function buildCamilla(){
-  const wrap = document.getElementById('bot_camillaWrap');
-  wrap.innerHTML = '';
-  CAMILLA_PREGUNTAS.forEach(preg=>{
-    const id = slug(preg);
-    const div = document.createElement('div');
-    div.className = 'camitem';
-    div.dataset.pregunta = preg;
-    div.innerHTML = `
-      <div class="ci-q">${preg}</div>
-      <div class="pills" data-group="cumple-${id}">
-        <div class="pill" data-v="SI">Sí cumple</div>
-        <div class="pill" data-v="NO">No cumple</div>
-      </div>
-      <input type="text" class="bi-obs" placeholder="Observación (opcional)" id="camobs-${id}">
-    `;
-    wrap.appendChild(div);
-    div.querySelectorAll('.pill').forEach(p=>{
-      p.addEventListener('click', ()=>{
-        div.querySelectorAll('.pill').forEach(x=>x.classList.remove('sel'));
-        p.classList.add('sel');
-        div.dataset.cumple = p.dataset.v;
-      });
-    });
-  });
-}
 
 
 document.getElementById('bot_tipoPills').querySelectorAll('.pill').forEach(p=>{
@@ -2142,7 +2106,6 @@ function botResetForm(){
   tipoBotiquin = null;
   document.querySelectorAll('#bot_tipoPills .pill').forEach(x=>x.classList.remove('sel'));
   botBuildItems();
-  buildCamilla();
   botPhotoDataUrl = null;
   const btn = document.getElementById('bot_fotoBtn');
   btn.classList.remove('has');
@@ -2187,8 +2150,7 @@ function botActualizarBannerPA(){
   texto.textContent = partes.join(' · ');
 }
 
-// Junta insumos + camilla en una sola lista de "renglones" — así el flujo de
-// Power Automate solo necesita UN ciclo y UNA hoja de Excel, no dos.
+// Arma la lista de "renglones" (uno por elemento del botiquín) para el flujo de Power Automate.
 function armarRenglones(record){
   const renglones = [];
   (record.items||[]).forEach(it=>{
@@ -2199,16 +2161,6 @@ function armarRenglones(record){
       vencimiento: it.vencimiento || '',
       estado: '',
       observacion: it.observacion || '',
-    });
-  });
-  (record.camilla||[]).forEach(c=>{
-    renglones.push({
-      seccion: 'Camilla',
-      detalle: c.pregunta,
-      cantidad: '',
-      vencimiento: '',
-      estado: c.cumple || '',
-      observacion: c.observacion || '',
     });
   });
   return renglones;
@@ -2347,18 +2299,6 @@ function guardarBotiquin(){
     });
   });
 
-  const camilla = [];
-  let camillaSinResponder = false;
-  document.querySelectorAll('.camitem').forEach(div=>{
-    if(!div.dataset.cumple) camillaSinResponder = true;
-    camilla.push({
-      pregunta: div.dataset.pregunta,
-      cumple: div.dataset.cumple || '',
-      observacion: div.querySelector('.bi-obs').value.trim(),
-    });
-  });
-  if(camillaSinResponder){ toast('Falta responder alguna pregunta de la camilla rígida'); return; }
-
   const record = {
     id: botEditingId || ('bot_'+Date.now()+'_'+Math.random().toString(36).slice(2,7)),
     fecha: document.getElementById('bot_fFecha').value,
@@ -2366,7 +2306,8 @@ function guardarBotiquin(){
     ubicacion,
     tipo: tipoBotiquin,
     items,
-    camilla,
+    // la camilla ya no se llena aquí; si el registro viejo la tenía, se conserva guardada sin mostrarla
+    camilla: botEditingId ? botRecords.find(r=>r.id===botEditingId)?.camilla : undefined,
     firma_data: botSigPads.responsable.toDataURL(),
     foto_data: botPhotoDataUrl,
     codigo: botEditingId ? (botRecords.find(r=>r.id===botEditingId)?.codigo || botGenerarCodigo(document.getElementById('bot_fFecha').value, ubicacion)) : botGenerarCodigo(document.getElementById('bot_fFecha').value, ubicacion),
@@ -2397,15 +2338,14 @@ function guardarBotiquin(){
 
 
 
-// Una alerta real es: cantidad puesta en 0 (agotado), vencido, o la camilla
-// no cumple. Un campo que sencillamente no se llenó NO cuenta como alerta.
+// Una alerta real es: cantidad puesta en 0 (agotado) o elemento vencido.
+// Un campo que sencillamente no se llenó NO cuenta como alerta.
 function botContarAlertas(record){
   let n = 0;
   (record.items||[]).forEach(it=>{
     if(it.cantidad !== '' && it.cantidad != null && Number(it.cantidad)===0) n++;
     else if(it.vencimiento && it.vencimiento < hoyISO()) n++;
   });
-  (record.camilla||[]).forEach(c=>{ if(c.cumple==='NO') n++; });
   return n;
 }
 function contarAgotados(record){
@@ -2413,9 +2353,6 @@ function contarAgotados(record){
 }
 function contarVencidos(record){
   return (record.items||[]).filter(it=> it.vencimiento && it.vencimiento < hoyISO()).length;
-}
-function contarCamillaMal(record){
-  return (record.camilla||[]).filter(c=> c.cumple==='NO').length;
 }
 function contarLlenos(record){
   return (record.items||[]).filter(it=> it.cantidad!=='' && it.cantidad!=null).length;
@@ -2425,9 +2362,6 @@ function listarAgotados(record){
 }
 function listarVencidos(record){
   return (record.items||[]).filter(it=> it.vencimiento && it.vencimiento < hoyISO()).map(it=> it.elemento+' (vencía '+it.vencimiento+')');
-}
-function listarCamillaMal(record){
-  return (record.camilla||[]).filter(c=> c.cumple==='NO').map(c=>c.pregunta);
 }
 function botShowRecap(record){
   const wrap = document.getElementById('bot_recapWrap');
@@ -2511,7 +2445,6 @@ function botEditarRegistro(id){
   document.getElementById('bot_fUbicacion').value = d.ubicacion || '';
 
   botBuildItems();
-  buildCamilla();
 
   tipoBotiquin = d.tipo || null;
   document.querySelectorAll('#bot_tipoPills .pill').forEach(p=>{
@@ -2526,18 +2459,6 @@ function botEditarRegistro(id){
     if(cant) cant.value = it.cantidad || '';
     if(venc) venc.value = it.vencimiento || '';
     if(obs) obs.value = it.observacion || '';
-  });
-
-  document.querySelectorAll('.camitem').forEach(div=>{
-    const match = (d.camilla||[]).find(c=>c.pregunta===div.dataset.pregunta);
-    if(!match) return;
-    if(match.cumple){
-      div.dataset.cumple = match.cumple;
-      div.querySelectorAll('.pill').forEach(p=> p.classList.toggle('sel', p.dataset.v===match.cumple));
-    }
-    const id2 = slug(match.pregunta);
-    const obs = document.getElementById('camobs-'+id2);
-    if(obs) obs.value = match.observacion || '';
   });
 
   botSigPads.responsable.loadExisting(d.firma_data);
@@ -2571,7 +2492,7 @@ function botCancelarEdicion(){
 
 
 
-// ---------- exportar a Excel (3 hojas: resumen, elementos, camilla) ----------
+// ---------- exportar a Excel (2 hojas: resumen y elementos) ----------
 async function botExportarExcel(){
   if(botRecords.length===0){ toast('No hay inspecciones guardadas en este celular para exportar'); return; }
   const expBtn = document.getElementById('bot_btnExport');
@@ -2613,31 +2534,28 @@ async function botExportarExcel(){
     {header:'Elementos revisados', key:'llenos', width:16},
     {header:'Agotados', key:'agotados', width:11},
     {header:'Vencidos', key:'vencidos', width:11},
-    {header:'Camilla: no cumple', key:'camilla_mal', width:15},
     {header:'Total alertas', key:'alertas', width:12},
     {header:'Detalle agotados', key:'det_agotados', width:34},
     {header:'Detalle vencidos', key:'det_vencidos', width:34},
-    {header:'Detalle camilla', key:'det_camilla', width:34},
     {header:'Firma', width:18},
     {header:'Foto', width:14},
   ];
-  const COL_AGOTADOS = 6, COL_VENCIDOS = 7, COL_CAMILLA_MAL = 8, COL_ALERTAS = 9, COL_FIRMA_R = 13, COL_FOTO_R = 14;
+  const COL_AGOTADOS = 6, COL_VENCIDOS = 7, COL_ALERTAS = 8, COL_FIRMA_R = 11, COL_FOTO_R = 12;
   ordered.forEach(d=>{
     wsR.addRow({
       fecha:d.fecha||'', ubicacion:d.ubicacion||'', tipo: d.tipo==='F'?'Fijo':'Portátil', responsable:d.responsable||'',
       llenos: contarLlenos(d)+' / '+(d.items||[]).length,
-      agotados: contarAgotados(d), vencidos: contarVencidos(d), camilla_mal: contarCamillaMal(d),
+      agotados: contarAgotados(d), vencidos: contarVencidos(d),
       alertas: botContarAlertas(d),
       det_agotados: listarAgotados(d).join(', ') || '—',
       det_vencidos: listarVencidos(d).join(', ') || '—',
-      det_camilla: listarCamillaMal(d).join(', ') || '—',
     });
   });
   styleHeader(wsR.getRow(1));
   styleBody(wsR);
   for(let r=2;r<=wsR.rowCount;r++){
     const row = wsR.getRow(r);
-    [COL_AGOTADOS, COL_VENCIDOS, COL_CAMILLA_MAL].forEach(col=>{
+    [COL_AGOTADOS, COL_VENCIDOS].forEach(col=>{
       const cell = row.getCell(col);
       if(Number(cell.value)>0){
         cell.fill = {type:'pattern', pattern:'solid', fgColor:{argb:'FFFBE4E1'}};
@@ -2733,29 +2651,6 @@ async function botExportarExcel(){
   }
   wsE.autoFilter = {from:{row:1,column:1}, to:{row:1,column:wsE.columns.length}};
 
-  // ---- Hoja 3: Camilla rígida ----
-  const wsC = wb.addWorksheet('Camilla Rígida', {properties:{tabColor:{argb:'FF2B6FD9'}}, views:[{state:'frozen', ySplit:1}]});
-  wsC.columns = [
-    {header:'Fecha', key:'fecha', width:12},
-    {header:'Ubicación', key:'ubicacion', width:22},
-    {header:'Pregunta', key:'pregunta', width:46},
-    {header:'Cumple', key:'cumple', width:11},
-    {header:'Observación', key:'observacion', width:34},
-  ];
-  ordered.forEach(d=>{
-    (d.camilla||[]).forEach(c=>{
-      wsC.addRow({fecha:d.fecha||'', ubicacion:d.ubicacion||'', pregunta:c.pregunta, cumple:c.cumple||'', observacion:c.observacion||''});
-    });
-  });
-  styleHeader(wsC.getRow(1));
-  styleBody(wsC);
-  for(let r=2;r<=wsC.rowCount;r++){
-    const cell = wsC.getRow(r).getCell(4);
-    if(cell.value==='NO'){ cell.fill = {type:'pattern', pattern:'solid', fgColor:{argb:'FFFBE4E1'}}; cell.font = {bold:true, color:{argb:'FFB23A2E'}}; }
-    else if(cell.value==='SI'){ cell.fill = {type:'pattern', pattern:'solid', fgColor:{argb:'FFE4F1E5'}}; cell.font = {bold:true, color:{argb:'FF3D7A4B'}}; }
-  }
-  wsC.autoFilter = {from:{row:1,column:1}, to:{row:1,column:wsC.columns.length}};
-
   const buf = await wb.xlsx.writeBuffer();
   const blob = new Blob([buf], {type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
   const sizeMB = (blob.size/1024/1024).toFixed(1);
@@ -2780,7 +2675,6 @@ function initBot(){
   botLoadLocalHeader();
   botLoadRecords();
   botBuildItems();
-  buildCamilla();
   createSignaturePad(botSigPads, 'responsable', 'bot_sig', 'bot_sigClear', 'bot_sigStatus');
   botSetupPhoto();
   document.getElementById('bot_btnGuardar').addEventListener('click', guardarBotiquin);
@@ -2811,12 +2705,11 @@ const ESTADO_ITEMS = [
   "Ring o aro de seguridad","Corneta","Señalización","Pintura","Golpes","Autoadhesivo fecha/tipo",
 ];
 const CAL_LABEL = {B:"Bueno", R:"Regular", M:"Malo", NA:"No aplica"};
-const TIPO_LABEL = {PQS:"PQS", CO2:"CO2", SOLKAFLAM:"Solkaflam 123", AGUA:"Agua", OTROS:"Otros"};
+const TIPO_LABEL = {PQS:"PQS", CO2:"CO2", SOLKAFLAM:"Solkaflam 123", AGUA:"Agua", OTROS:"Otros", BC:"BC", ABC:"ABC"};
 
 let extRecords = [];
 let extEditingId = null;
 let tipoExtintor = null;
-let clasifExtintor = null;
 let extPhotoDataUrl = null;
 const extSigPads = {};
 
@@ -2858,19 +2751,12 @@ function extSaveLocalHeader(){
   }catch(e){}
 }
 
-// ---------- pills tipo / clasificación ----------
+// ---------- pills de tipo ----------
 document.getElementById('ext_tipoPills').querySelectorAll('.pill').forEach(p=>{
   p.addEventListener('click', ()=>{
     document.querySelectorAll('#ext_tipoPills .pill').forEach(x=>x.classList.remove('sel'));
     p.classList.add('sel');
     tipoExtintor = p.dataset.v;
-  });
-});
-document.getElementById('ext_clasifPills').querySelectorAll('.pill').forEach(p=>{
-  p.addEventListener('click', ()=>{
-    document.querySelectorAll('#ext_clasifPills .pill').forEach(x=>x.classList.remove('sel'));
-    p.classList.add('sel');
-    clasifExtintor = p.dataset.v;
   });
 });
 
@@ -2931,8 +2817,8 @@ function extResetForm(){
   document.getElementById('ext_fCapacidad').value = '';
   document.getElementById('ext_fVencimiento').value = '';
   document.getElementById('ext_fObs').value = '';
-  tipoExtintor = null; clasifExtintor = null;
-  document.querySelectorAll('#ext_tipoPills .pill, #ext_clasifPills .pill').forEach(x=>x.classList.remove('sel'));
+  tipoExtintor = null;
+  document.querySelectorAll('#ext_tipoPills .pill').forEach(x=>x.classList.remove('sel'));
   buildEstado();
   extPhotoDataUrl = null;
   const btn = document.getElementById('ext_fotoBtn');
@@ -3123,7 +3009,7 @@ function guardarExtintor(){
     codigo,
     ubicacion,
     tipo: tipoExtintor,
-    clasificacion: clasifExtintor || '',
+    clasificacion: extEditingId ? (extRecords.find(r=>r.id===extEditingId)?.clasificacion || '') : '',
     capacidad: document.getElementById('ext_fCapacidad').value.trim(),
     vencimiento: document.getElementById('ext_fVencimiento').value,
     estado,
@@ -3263,8 +3149,6 @@ function extEditarRegistro(id){
 
   tipoExtintor = d.tipo || null;
   document.querySelectorAll('#ext_tipoPills .pill').forEach(p=> p.classList.toggle('sel', p.dataset.v===d.tipo));
-  clasifExtintor = d.clasificacion || null;
-  document.querySelectorAll('#ext_clasifPills .pill').forEach(p=> p.classList.toggle('sel', p.dataset.v===d.clasificacion));
 
   buildEstado();
   document.querySelectorAll('.estitem').forEach(div=>{
@@ -3344,7 +3228,6 @@ async function extExportarExcel(){
     {header:'Código', key:'codigo', width:12},
     {header:'Ubicación', key:'ubicacion', width:22},
     {header:'Tipo', key:'tipo', width:13},
-    {header:'Clasificación', key:'clasificacion', width:12},
     {header:'Capacidad', key:'capacidad', width:11},
     {header:'Vencimiento recarga', key:'vencimiento', width:16},
     {header:'Responsable', key:'responsable', width:20},
@@ -3355,11 +3238,11 @@ async function extExportarExcel(){
     {header:'Firma', width:18},
     {header:'Foto', width:14},
   ];
-  const COL_VENC = 8, COL_MALOS = 10, COL_REG = 11, COL_ALERTAS = 12, COL_FIRMA_R = 15, COL_FOTO_R = 16;
+  const COL_VENC = 7, COL_MALOS = 9, COL_REG = 10, COL_ALERTAS = 11, COL_FIRMA_R = 13, COL_FOTO_R = 14;
   ordered.forEach(d=>{
     wsR.addRow({
       fecha:d.fecha||'', plantacion:d.plantacion||'', codigo:d.codigo||'', ubicacion:d.ubicacion||'',
-      tipo: TIPO_LABEL[d.tipo]||d.tipo||'', clasificacion:d.clasificacion||'', capacidad:d.capacidad||'',
+      tipo: TIPO_LABEL[d.tipo]||d.tipo||'', capacidad:d.capacidad||'',
       vencimiento:d.vencimiento||'', responsable:d.responsable||'',
       malos: contarMalos(d), regulares: contarRegulares(d), alertas: extContarAlertas(d),
       det_malos: (d.estado||[]).filter(e=>e.calificacion==='M').map(e=>e.item).join(', ') || '—',
@@ -4605,7 +4488,7 @@ const UNIDAD_CONFIGS = {
     firmas: [{key:'responsable', label:'Firma del responsable de la inspección'}],
   },
   vehiculo: {
-    paWebhookUrl: '', // se completa cuando el flujo de vehiculo esté listo
+    paWebhookUrl: 'https://defaultc30619979f9e4ad6a335e5e17e5f19.4a.environment.api.powerplatform.com:443/powerautomate/automations/direct/cu/28/workflows/24680744d9ec4b03992aaadd21dbb005/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=TJ-sxDOYnjiN4OYIa3Z7mfR_xDJEiV7D8zq6iLWA7rU',
     titulo: 'Vehículo liviano', codigo: '',
     subtitulo: 'Documentos y revisión mecánica completa',
     idLabel: 'Placa del vehículo', idPlaceholder: 'Ej: ABC123',
@@ -4645,7 +4528,7 @@ const UNIDAD_CONFIGS = {
     firmas: [{key:'conductor', label:'Firma del conductor'}, {key:'responsable', label:'Firma del responsable de la inspección'}],
   },
   motos: {
-    paWebhookUrl: '', // se completa cuando el flujo de motos esté listo
+    paWebhookUrl: 'https://defaultc30619979f9e4ad6a335e5e17e5f19.4a.environment.api.powerplatform.com:443/powerautomate/automations/direct/cu/23/workflows/bf6f34ac4dc945469911ba78e1f1ce19/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=ybT8L8d_Ph3hUcHXRTmiwTREqXs2B-t_vBYJGLCRqnU',
     titulo: 'Motocicletas', codigo: 'SST-FT-016',
     subtitulo: 'Documentos, luces y mecánica',
     idLabel: 'Placa de la moto', idPlaceholder: 'Ej: XYZ12A',
@@ -4749,6 +4632,24 @@ const UNIDAD_CONFIGS = {
       {categoria:'Aprobación final', aspecto:'El bus queda en condiciones seguras para operar'},
     ],
     firmas: [{key:'conductor', label:'Firma del conductor'}, {key:'responsable', label:'Firma del responsable de la inspección'}],
+  },
+  camilla: {
+    paWebhookUrl: 'https://defaultc30619979f9e4ad6a335e5e17e5f19.4a.environment.api.powerplatform.com:443/powerautomate/automations/direct/cu/28/workflows/cfccb96344c44ef0ba331a15ef2d4630/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=XANjr6U_3L0WlGM8yqxMbo6uM8J34xgozQiSKrpsxGM',
+    titulo: 'Camilla rígida', codigo: 'FT-SST-006',
+    subtitulo: 'Visible, señalizada, con correas e inmovilizadores — por camilla',
+    idLabel: 'Ubicación de la camilla', idPlaceholder: 'Ej: Bodega Corozos',
+    camposHeader: [],
+    estadoOpciones: ['C','NC'],
+    items: [
+      '¿La camilla se encuentra visible?',
+      '¿La camilla es de fácil acceso, sin elementos que la obstruyan?',
+      '¿Se encuentra señalizada?',
+      '¿El soporte se encuentra en buenas condiciones?',
+      '¿Cuenta con correas de seguridad y estas están en buen estado?',
+      '¿Cuenta con sujetadores para agarre?',
+      '¿Cuenta con juego de inmovilizadores de miembro inferior y superior?',
+    ],
+    firmas: [{key:'responsable', label:'Firma del responsable de la inspección'}],
   },
   bicicletas: {
     paWebhookUrl: '', // se completa cuando el flujo de bicicletas esté listo
@@ -5552,7 +5453,7 @@ function udInit(tipo){
   ['zorrillos','vagones','tractores','herramientas'].forEach(udInit);
   ['locativa','rotulos','kitderrames'].forEach(udInit);
   ['vehiculo','motos','bus'].forEach(udInit);
-  ['bicicletas'].forEach(udInit);
+  ['bicicletas','camilla'].forEach(udInit);
   setupHomeNav();
   mostrarPantalla('screen-home');
   if('serviceWorker' in navigator){
