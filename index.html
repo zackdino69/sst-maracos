@@ -4368,14 +4368,14 @@ const UNIDAD_CONFIGS = {
       'Medidores, indicadores, interruptores, controles - Daños, funcionamiento',
       'Interior de la cabina - Limpieza',
     ],
-    firmas: [{key:'responsable', label:'Firma del responsable de la inspección / operario'}],
+    firmas: [{key:'operario', label:'Firma del operario'}, {key:'responsable', label:'Firma del encargado de la inspección'}],
   },
   herramientas: {
     paWebhookUrl: 'https://defaultc30619979f9e4ad6a335e5e17e5f19.4a.environment.api.powerplatform.com:443/powerautomate/automations/direct/cu/05/workflows/498da2bb20ff4fa6a6a13a32212172ae/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=ozDGRUWLy1BSIihM_Os64BCec4O65CYpzA-WfjCwUhI',
     titulo: 'Herramientas manuales', codigo: 'FT-SST-013',
     subtitulo: 'Un trabajador por inspección — repite para el siguiente',
     idLabel: 'Nombre del trabajador', idPlaceholder: 'Nombre completo',
-    camposHeader: [{id:'responsableInspeccion', label:'Responsable de la inspección'}, {id:'lugar', label:'Lugar / Área'}],
+    camposHeader: [{id:'lugar', label:'Lugar / Área'}],
     estadoOpciones: ['B','M','NA'],
     items: [
       'Barras / Barretones - Estado general',
@@ -4390,7 +4390,7 @@ const UNIDAD_CONFIGS = {
       'Palas - Revisar ajuste del mango, astillas',
       'Limas - Estado de superficie estriada y del mango',
     ],
-    firmas: [{key:'trabajador', label:'Firma del trabajador'}],
+    firmas: [{key:'trabajador', label:'Firma del trabajador'}, {key:'responsable', label:'Firma del responsable de la inspección'}],
   },
   locativa: {
     paWebhookUrl: 'https://defaultc30619979f9e4ad6a335e5e17e5f19.4a.environment.api.powerplatform.com:443/powerautomate/automations/direct/cu/11/workflows/6ec97121ab6942f6a51167419db8554b/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=FJbQgKrXghPPeXfDUaaJg--QRaxfNuKTg5_EvWiUtlk',
@@ -4463,7 +4463,7 @@ const UNIDAD_CONFIGS = {
       {categoria:'11. Medio ambiente — Sustancias químicas', aspecto:'El área cuenta con las hojas de seguridad'},
       {categoria:'11. Medio ambiente — Sustancias químicas', aspecto:'Otro'},
     ],
-    firmas: [{key:'responsable', label:'Firma responsable de la inspección'}, {key:'sgsst', label:'Firma responsable del SG-SST'}],
+    firmas: [{key:'responsable', label:'Firma responsable de la inspección'}, {key:'sgsst', label:'Firma responsable del SG-SST', opcional:true}],
   },
   rotulos: {
     paWebhookUrl: 'https://defaultc30619979f9e4ad6a335e5e17e5f19.4a.environment.api.powerplatform.com:443/powerautomate/automations/direct/cu/12/workflows/2cbe380f3b30406d97685fce613cc2e6/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=_fDJS2_S0YaaHXPJjP98zUtZQo_yXltECk9yZX_64ow',
@@ -4698,7 +4698,7 @@ function udRenderScreenHtml(tipo, cfg){
       <input type="text" id="${tipo}_fResponsable" placeholder="Nombre completo">` : '';
   const firmasHtml = cfg.firmas.map(f=>`
       <div class="card">
-        <h2>${f.label}</h2>
+        <h2>${f.label}${f.opcional ? '<small>Opcional</small>' : ''}</h2>
         <div class="sig-wrap"><canvas id="${tipo}_sig_${f.key}" class="sigcanvas"></canvas></div>
         <div class="sig-actions"><span></span><button id="${tipo}_sigClear_${f.key}" type="button">Limpiar firma</button></div>
         ${f.key==='responsable' ? '<p class="sig-note">Se guarda para toda la sesión — solo hace falta firmar una vez, salvo que la limpies.</p>' : ''}
@@ -5075,7 +5075,7 @@ function udGuardar(tipo){
   }
 
   for(const f of cfg.firmas){
-    if(!st.sigPads[f.key].drawn){ toast('Falta: '+f.label); return; }
+    if(!f.opcional && !st.sigPads[f.key].drawn){ toast('Falta: '+f.label); return; }
   }
 
   const items = [];
@@ -5108,7 +5108,7 @@ function udGuardar(tipo){
   cfg.camposHeader.forEach(c=>{ campos[c.id] = document.getElementById(tipo+'_c_'+c.id).value.trim(); });
 
   const firmas_data = {};
-  cfg.firmas.forEach(f=>{ firmas_data[f.key] = st.sigPads[f.key].toDataURL(); });
+  cfg.firmas.forEach(f=>{ if(!f.opcional || st.sigPads[f.key].drawn) firmas_data[f.key] = st.sigPads[f.key].toDataURL(); });
 
   const prevRec = st.editingId ? st.records.find(r=>r.id===st.editingId) : null;
   const record = {
