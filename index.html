@@ -605,6 +605,8 @@
   .epi-linea{display:grid;grid-template-columns:minmax(0,1fr) 84px 44px;gap:8px;align-items:center;margin-bottom:8px;}
   .epi-linea input{margin:0;min-height:44px;}
   .epi-quitar{min-height:44px;border:1px solid var(--line);border-radius:10px;background:transparent;color:var(--ink-soft);font-size:22px;line-height:1;cursor:pointer;}
+
+  .home-version{margin:26px 0 0;text-align:center;font-size:11.5px;color:var(--ink-soft);opacity:.85;}
 </style>
 </head>
 <body>
@@ -838,6 +840,7 @@
         </button>
         </div>
       </section>
+      <p id="homeVersion" class="home-version"></p>
       <p id="homeVacio" class="home-vacio hidden">Ningún formulario coincide con esa búsqueda. Prueba con otra palabra, por ejemplo "bomba" o "vehículo".</p>
     </div>
   </div>
@@ -6232,6 +6235,7 @@ function entInit(){
 // Cada renglón del formato = fecha, EPP entregado, nombre del trabajador, cantidad y la firma de quien recibe.
 // Va a un Excel y a una carpeta aparte de las inspecciones
 // (Gestión SST / 1. SG SST 2026 / 10. EPP Y DOTACIÓN DE SEGURIDAD). No es el mismo formato que SST-FT-002.
+const APP_VERSION = '2026-10-19 14:52';
 const EPI_PA_WEBHOOK_URL = 'https://defaultc30619979f9e4ad6a335e5e17e5f19.4a.environment.api.powerplatform.com:443/powerautomate/automations/direct/cu/28/workflows/26044ad3bd3a48d6a1460256a39cba09/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=CRuqDyROi2JyZeQmHglZx9SvT_-1msJie6gWyiVIS68';
 const EPI_STORAGE_KEY = 'epi_records_v1';
 const EPI_PA_TIMEOUT_MS = 100000;
@@ -6649,6 +6653,7 @@ function epiActualizarBannerPA(){
     ? '⏳ '+n+' entrega(s) por enviar al Excel'
     : '📴 Sin señal — '+n+' entrega(s) esperan para enviarse');
   if(m>0) partes.push('⚠️ '+m+' sin confirmar: revisa si están en el Excel');
+  if(!EPI_PA_WEBHOOK_URL) partes.push('esta versión no tiene el flujo conectado');
   texto.textContent = partes.join(' · ');
 }
 
@@ -6714,7 +6719,7 @@ async function epiPasadaDeEnvio(manual, soloId){
 }
 
 async function epiEnviarPendientes(manual, soloId){
-  if(!EPI_PA_WEBHOOK_URL) return;
+  if(!EPI_PA_WEBHOOK_URL){ if(manual) toast('Este formulario aún no tiene flujo conectado'); return; }
   if(epiEnviandoPA){ if(manual) toast('Ya hay un envío en curso, espera un momento'); return; }
   if(!navigator.onLine){
     if(manual) toast('Sin señal: se enviará solo cuando vuelva');
@@ -6844,6 +6849,7 @@ function refrescarInicio(){
 }
 
 function instalarInicio(){
+  document.getElementById('homeVersion').textContent = 'Versión ' + APP_VERSION + ' · Entrega individual de EPI: ' + (EPI_PA_WEBHOOK_URL ? 'flujo conectado' : 'sin flujo conectado');
   document.getElementById('homeBuscar').addEventListener('input', filtrarInicio);
   window.addEventListener('online', refrescarInicio);
   window.addEventListener('offline', refrescarInicio);
