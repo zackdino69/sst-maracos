@@ -6235,7 +6235,7 @@ function entInit(){
 // Cada renglón del formato = fecha, EPP entregado, nombre del trabajador, cantidad y la firma de quien recibe.
 // Va a un Excel y a una carpeta aparte de las inspecciones
 // (Gestión SST / 1. SG SST 2026 / 10. EPP Y DOTACIÓN DE SEGURIDAD). No es el mismo formato que SST-FT-002.
-const APP_VERSION = '2026-10-19 18:40';
+const APP_VERSION = '2026-10-19 19:52';
 const EPI_PA_WEBHOOK_URL = 'https://defaultc30619979f9e4ad6a335e5e17e5f19.4a.environment.api.powerplatform.com:443/powerautomate/automations/direct/cu/28/workflows/26044ad3bd3a48d6a1460256a39cba09/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=CRuqDyROi2JyZeQmHglZx9SvT_-1msJie6gWyiVIS68';
 const EPI_STORAGE_KEY = 'epi_records_v1';
 const EPI_PA_TIMEOUT_MS = 100000;
@@ -6305,6 +6305,8 @@ function epiRenderScreenHtml(){
         <input type="text" id="epi_filTexto" placeholder="Buscar trabajador o EPP…">
       </div>
       <button class="btn btn-ghost" id="epi_btnExport" style="margin-bottom:12px;">Exportar a Excel (formato de entrega)</button>
+      <button class="btn btn-ghost" id="epi_btnDiag" style="margin-bottom:12px;">Diagnóstico del envío</button>
+      <pre id="epi_diagOut" class="hidden" style="white-space:pre-wrap;word-break:break-word;font-size:12.5px;line-height:1.5;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px;margin:0 0 14px;"></pre>
       <div id="epi_histList"></div>
     </div>
   `;
@@ -6749,12 +6751,68 @@ async function epiEnviarPendientes(manual, soloId){
     }else{
       await epiPasadaDeEnvio(manual === true, soloId);
     }
+  }catch(e){
+    console.error('Error al enviar (entrega individual de EPI):', e);
+    epiAvisoEnvio = 'error interno al enviar (' + ((e && e.message) || e) + ')';
+    if(manual) toast('Error al enviar: ' + ((e && e.message) || e));
   }finally{
     epiEnviandoPA = false;
     epiEnviandoId = null;
     epiActualizarBannerPA();
     epiRenderHistorial();
   }
+}
+
+// Muestra en pantalla, sin necesidad de F12, todo lo que hace falta para saber por qué no sale una entrega.
+async function epiDiagnostico(){
+  const out = document.getElementById('epi_diagOut');
+  const btn = document.getElementById('epi_btnDiag');
+  const L = [];
+  const mostrar = ()=>{ out.textContent = L.join('\n'); out.classList.remove('hidden'); };
+  btn.disabled = true;
+  L.push('DIAGNÓSTICO DEL ENVÍO — espera unos segundos…'); mostrar();
+  try{
+    L.push('Versión de la app: ' + APP_VERSION);
+    L.push('Flujo conectado: ' + (EPI_PA_WEBHOOK_URL ? 'sí (la dirección termina en …' + EPI_PA_WEBHOOK_URL.slice(-8) + ')' : 'NO'));
+    L.push('Con señal (el navegador dice): ' + (navigator.onLine ? 'sí' : 'NO'));
+    epiLoadRecords();
+    const pend = epiRecords.filter(epiEstaPendiente).sort((a,b)=> (a.created_at||'').localeCompare(b.created_at||''));
+    const rev = epiRecords.filter(epiEstaPorRevisar), env = epiRecords.filter(r=> r.pa_estado==='enviado');
+    L.push('Entregas guardadas: ' + epiRecords.length + ' (pendientes ' + pend.length + ', sin confirmar ' + rev.length + ', enviadas ' + env.length + ')');
+    L.push('Envío en curso (bandera interna): ' + (epiEnviandoPA ? 'SÍ — puede estar trabado' : 'no'));
+    if(typeof navigator.locks !== 'undefined' && navigator.locks.request){
+      const libre = await navigator.locks.request('epi-envio-pa', {ifAvailable:true}, async (lock)=> !!lock);
+      L.push('Bloqueo entre pestañas: ' + (libre ? 'libre' : 'OCUPADO por otra pestaña o ventana'));
+    }else{
+      L.push('Bloqueo entre pestañas: no existe en este navegador (no es problema)');
+    }
+    mostrar();
+    if(!EPI_PA_WEBHOOK_URL){
+      L.push('CONCLUSIÓN: esta versión de la app no tiene el flujo conectado. Hay que actualizarla.');
+    }else{
+      try{
+        await fetch(EPI_PA_WEBHOOK_URL, {method:'GET', mode:'no-cors'});   // solo prueba la conexión: no ejecuta el flujo
+        L.push('¿Llega a la dirección del flujo? sí (el navegador pudo conectarse)');
+      }catch(e){
+        L.push('¿Llega a la dirección del flujo? NO — ' + ((e && e.message) || e));
+      }
+      mostrar();
+      if(pend.length){
+        L.push('Intentando enviar las ' + pend.length + ' pendiente(s) con el botón normal…'); mostrar();
+        await epiEnviarPendientes(true);
+        epiLoadRecords();
+        const quedan = epiRecords.filter(epiEstaPendiente);
+        if(quedan.length === 0) L.push('RESULTADO: todas salieron. Revisa el historial de ejecuciones del flujo.');
+        else L.push('RESULTADO: siguen ' + quedan.length + ' pendiente(s). Último intento: ' + (quedan[0].pa_motivo || 'sin motivo registrado') + (epiAvisoEnvio ? ' · aviso: ' + epiAvisoEnvio : ''));
+      }else{
+        L.push('No hay entregas pendientes que enviar.');
+      }
+    }
+  }catch(e){
+    L.push('ERROR dentro del diagnóstico: ' + ((e && e.stack) || e));
+  }
+  btn.disabled = false;
+  mostrar();
 }
 
 function epiReenviarRegistro(id){
@@ -6785,6 +6843,7 @@ function epiInit(){
   document.getElementById('epi_btnGuardar').addEventListener('click', epiGuardar);
   document.getElementById('epi_btnCancelarEdicion').addEventListener('click', epiCancelarEdicion);
   document.getElementById('epi_btnExport').addEventListener('click', epiExportarExcel);
+  document.getElementById('epi_btnDiag').addEventListener('click', epiDiagnostico);
   document.getElementById('epi_filFecha').addEventListener('change', epiRenderHistorial);
   document.getElementById('epi_filTexto').addEventListener('input', epiRenderHistorial);
   document.getElementById('epi_btnReenviar').addEventListener('click', ()=>epiEnviarPendientes(true));
