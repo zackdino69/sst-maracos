@@ -5647,7 +5647,7 @@ function udInit(tipo){
 // No es una inspección: registra qué EPP se le entregó a un trabajador, con su compromiso
 // y su firma. Va a un Excel y a una carpeta aparte de las inspecciones
 // (Gestión SST / 1. SG SST 2026 / 10. EPP Y DOTACIÓN DE SEGURIDAD).
-const ENT_PA_WEBHOOK_URL = ''; // se completa cuando el flujo de Entrega de EPP esté listo
+const ENT_PA_WEBHOOK_URL = 'https://defaultc30619979f9e4ad6a335e5e17e5f19.4a.environment.api.powerplatform.com:443/powerautomate/automations/direct/cu/17/workflows/a6c01e169937456a83cfe49b70a0c5d3/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=PDKQJi6DrpotsUZpVle2_YsO7gn9APUI7NTk3M-wUtw';
 const ENT_RECORDS_KEY = 'ent_records_v1';
 const ENT_MAX_FILAS = 15;
 const ENT_SUGERENCIAS = ['Casco','Guantes','Botas','Protección auditiva','Canilleras','Careta','Protección visual','Protección respiratoria'];
@@ -6235,7 +6235,7 @@ function entInit(){
 // Cada renglón del formato = fecha, EPP entregado, nombre del trabajador, cantidad y la firma de quien recibe.
 // Va a un Excel y a una carpeta aparte de las inspecciones
 // (Gestión SST / 1. SG SST 2026 / 10. EPP Y DOTACIÓN DE SEGURIDAD). No es el mismo formato que SST-FT-002.
-const APP_VERSION = '2026-10-19 19:52';
+const APP_VERSION = '2026-10-19 21:14';
 const EPI_PA_WEBHOOK_URL = 'https://defaultc30619979f9e4ad6a335e5e17e5f19.4a.environment.api.powerplatform.com:443/powerautomate/automations/direct/cu/28/workflows/26044ad3bd3a48d6a1460256a39cba09/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=CRuqDyROi2JyZeQmHglZx9SvT_-1msJie6gWyiVIS68';
 const EPI_STORAGE_KEY = 'epi_records_v1';
 const EPI_PA_TIMEOUT_MS = 100000;
@@ -6921,7 +6921,7 @@ function refrescarInicio(){
 }
 
 function instalarInicio(){
-  document.getElementById('homeVersion').textContent = 'Versión ' + APP_VERSION + ' · Entrega individual de EPI: ' + (EPI_PA_WEBHOOK_URL ? 'flujo conectado' : 'sin flujo conectado');
+  document.getElementById('homeVersion').textContent = 'Versión ' + APP_VERSION + ' · Entrega de EPP: ' + (ENT_PA_WEBHOOK_URL ? 'flujo conectado' : 'sin flujo conectado') + ' · Entrega individual de EPI: ' + (EPI_PA_WEBHOOK_URL ? 'flujo conectado' : 'sin flujo conectado');
   document.getElementById('homeBuscar').addEventListener('input', filtrarInicio);
   window.addEventListener('online', refrescarInicio);
   window.addEventListener('offline', refrescarInicio);
