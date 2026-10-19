@@ -6232,7 +6232,7 @@ function entInit(){
 // Cada renglón del formato = fecha, EPP entregado, nombre del trabajador, cantidad y la firma de quien recibe.
 // Va a un Excel y a una carpeta aparte de las inspecciones
 // (Gestión SST / 1. SG SST 2026 / 10. EPP Y DOTACIÓN DE SEGURIDAD). No es el mismo formato que SST-FT-002.
-const EPI_PA_WEBHOOK_URL = ''; // se completa cuando el flujo de Entrega individual de EPI esté listo
+const EPI_PA_WEBHOOK_URL = 'https://defaultc30619979f9e4ad6a335e5e17e5f19.4a.environment.api.powerplatform.com:443/powerautomate/automations/direct/cu/28/workflows/26044ad3bd3a48d6a1460256a39cba09/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=CRuqDyROi2JyZeQmHglZx9SvT_-1msJie6gWyiVIS68';
 const EPI_STORAGE_KEY = 'epi_records_v1';
 const EPI_PA_TIMEOUT_MS = 100000;
 const EPI_PA_ENFRIAMIENTO_MS = 10*60*1000;
@@ -6562,7 +6562,7 @@ async function epiArmarLibro(filas, minimoFilas){
 
   // renglones desde la fila 6
   const total = Math.max(minimoFilas || 10, filas.length);
-  const idPorFirma = {};
+  const grupos = [];   // una entrega = renglones seguidos con la misma clave
   for(let i=0;i<total;i++){
     const r = 6 + i;
     const row = ws.getRow(r);
@@ -6575,6 +6575,9 @@ async function epiArmarLibro(filas, minimoFilas){
       row.getCell(3).value = f.epp;
       row.getCell(4).value = f.trabajador;
       row.getCell(5).value = f.cantidad;
+      const anterior = filas[i-1];
+      if(i===0 || !anterior || (anterior.clave||String(i-1)) !== (f.clave||String(i))) grupos.push({inicio:i, n:1, f});
+      else grupos[grupos.length-1].n++;
     }
     for(let c=1;c<=6;c++){
       const cell = row.getCell(c);
@@ -6583,24 +6586,26 @@ async function epiArmarLibro(filas, minimoFilas){
       cell.alignment = {vertical:'middle', horizontal:(c===3||c===4)?'left':'center', wrapText:true};
       if(c===2) cell.numFmt = '@';   // la fecha va como texto dd/mm/aaaa, sin que Excel la reinterprete
     }
-    if(f && f.firma_data){
-      try{
-        const k = f.clave || String(i);
-        if(idPorFirma[k]===undefined){
-          const {buffer, extension} = dataURLtoBuffer(f.firma_data);
-          // medidas reales del PNG (ancho y alto están en los bytes 16 a 23) para no deformar la firma
-          let w = 0, h = 0;
-          if(extension==='png' && buffer.byteLength > 24){ const dv = new DataView(buffer); w = dv.getUint32(16); h = dv.getUint32(20); }
-          idPorFirma[k] = {id: wb.addImage({buffer, extension}), w, h};
-        }
-        const im = idPorFirma[k];
-        const esc = (im.w>0 && im.h>0) ? Math.min(150/im.w, 38/im.h) : 1;
-        const aw = im.w>0 ? im.w*esc : 150, ah = im.h>0 ? im.h*esc : 38;
-        const colPx = 215, rowPx = 45;   // tamaño aproximado de la celda FIRMA RECIBIDO
-        ws.addImage(im.id, {tl:{col: 5 + Math.max(0,(colPx-aw)/2)/colPx, row: (r-1) + Math.max(0,(rowPx-ah)/2)/rowPx}, ext:{width:aw, height:ah}});
-      }catch(e){}
-    }
   }
+  // La firma va UNA sola vez por entrega: si la entrega tiene varios EPP, se combinan las celdas
+  // de FIRMA RECIBIDO de sus renglones y la firma se centra ahí.
+  const colPx = 215, rowPx = 45;   // tamaño aproximado de una celda de FIRMA RECIBIDO
+  grupos.forEach(g=>{
+    if(!g.f.firma_data) return;
+    try{
+      if(g.n > 1) ws.mergeCells(6 + g.inicio, 6, 6 + g.inicio + g.n - 1, 6);
+      const {buffer, extension} = dataURLtoBuffer(g.f.firma_data);
+      // medidas reales del PNG (ancho y alto están en los bytes 16 a 23) para no deformarla
+      let w = 0, h = 0;
+      if(extension==='png' && buffer.byteLength > 24){ const dv = new DataView(buffer); w = dv.getUint32(16); h = dv.getUint32(20); }
+      const imgId = wb.addImage({buffer, extension});
+      const altoPx = g.n * rowPx;
+      const esc = (w>0 && h>0) ? Math.min((colPx-14)/w, (altoPx-8)/h, 150/w*1.6) : 1;
+      const aw = w>0 ? w*esc : 150, ah = h>0 ? h*esc : 38;
+      const arribaPx = Math.max(0, (altoPx - ah) / 2);
+      ws.addImage(imgId, {tl:{col: 5 + Math.max(0,(colPx-aw)/2)/colPx, row: (5 + g.inicio) + Math.floor(arribaPx/rowPx) + (arribaPx % rowPx)/rowPx}, ext:{width:aw, height:ah}});
+    }catch(e){}
+  });
   return wb;
 }
 
