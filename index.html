@@ -266,6 +266,16 @@
   .accion-row .ac-actividad{flex:1 1 180px;}
   .accion-row .ac-responsable{flex:1 1 120px;}
   .accion-row .ac-fecha{flex:0 0 140px;}
+  .accion-row-col{flex-direction:column;flex-wrap:nowrap;gap:6px;padding:10px;border:1px solid var(--line);border-radius:10px;background:var(--card);}
+  .accion-row-col input{width:100%;}
+  .accion-row-col .ac-titulo{font-weight:700;font-size:13px;color:var(--ink-soft);}
+  .accion-row-col .ac-lbl{margin:2px 0 0;}
+  .ud-estadogen .pill{padding:11px 10px;font-size:13.5px;}
+  .ud-estadogen .pill[data-v^="Aceptable"].sel{background:var(--warn-bg);border-color:var(--warn);color:var(--warn);}
+  .ud-estadogen .pill[data-v^="Deficiente"].sel{background:var(--bad-bg);border-color:var(--bad);color:var(--bad);}
+  /* el campo nativo de archivo (Choose File / Elegir archivo) no se muestra: la foto se toma con el botón "Adjuntar foto".
+     Se oculta sin display:none para que el botón siga pudiendo abrir la cámara en todos los celulares. */
+  input[type="file"][id*="_fotoInput"]{position:absolute;width:1px;height:1px;opacity:0;overflow:hidden;clip:rect(0 0 0 0);pointer-events:none;}
   .cat-title:first-child{margin-top:0;}
   label{display:block;font-size:12px;font-weight:600;color:var(--ink-soft);margin:10px 0 4px;}
   label:first-child{margin-top:0;}
@@ -824,7 +834,7 @@
         </div>
       </section>
       <section class="home-group">
-        <h2 class="home-group-title">Instalaciones <span>2</span></h2>
+        <h2 class="home-group-title">Instalaciones <span>3</span></h2>
         <div class="home-grid">
         <button class="home-card" data-abrir="locativa" type="button">
           <span class="home-icon" style="background:var(--good-bg);color:var(--good);">🏢</span>
@@ -844,6 +854,15 @@
           </span>
           <span class="home-pend hidden" data-pend="rotulos"></span>
         </button>
+        <button class="home-card" data-abrir="corrales" type="button">
+          <span class="home-icon" style="background:var(--good-bg);color:var(--good);">🐄</span>
+          <span class="home-body">
+            <span class="home-title">Corrales de ganadería</span>
+            <span class="home-desc">Instalaciones, orden y aseo, bienestar animal y seguridad</span>
+            <span class="home-code">Sin código oficial</span>
+          </span>
+          <span class="home-pend hidden" data-pend="corrales"></span>
+        </button>
         </div>
       </section>
       <p id="homeVersion" class="home-version"></p>
@@ -860,6 +879,7 @@
   <div id="screen-herramientas" class="screen hidden"></div>
   <div id="screen-locativa" class="screen hidden"></div>
   <div id="screen-rotulos" class="screen hidden"></div>
+  <div id="screen-corrales" class="screen hidden"></div>
   <div id="screen-kitderrames" class="screen hidden"></div>
   <div id="screen-alturas" class="screen hidden"></div>
   <div id="screen-vehiculo" class="screen hidden"></div>
@@ -4600,6 +4620,61 @@ const UNIDAD_CONFIGS = {
     ],
     firmas: [{key:'trabajador', label:'Firma del trabajador'}, {key:'responsable', label:'Firma del responsable de la inspección'}],
   },
+  corrales: {
+    paWebhookUrl: '', // CORRALES_URL (se completa cuando exista el flujo)
+    titulo: 'Corrales de ganadería', codigo: '',
+    subtitulo: 'Instalaciones, orden y aseo, bienestar animal y seguridad',
+    idLabel: 'Finca / Plantación', idPlaceholder: 'Nombre de la finca o plantación',
+    camposHeader: [
+      {id:'cargo', label:'Cargo'},
+      {id:'cantidadAnimales', label:'Cantidad aproximada de animales'},
+      {id:'responsableArea', label:'Responsable del área'},
+    ],
+    estadoOpciones: ['C','NC','NA'],
+    items: [
+      {categoria:'A. Instalaciones e infraestructura', aspecto:'Los corrales se encuentran en buen estado y sin daños visibles.'},
+      {categoria:'A. Instalaciones e infraestructura', aspecto:'Las cercas y divisiones se encuentran firmes y seguras.'},
+      {categoria:'A. Instalaciones e infraestructura', aspecto:'Las puertas y broches funcionan correctamente.'},
+      {categoria:'A. Instalaciones e infraestructura', aspecto:'No existen puntas, clavos, alambres u objetos que puedan causar lesiones.'},
+      {categoria:'A. Instalaciones e infraestructura', aspecto:'Los pisos se encuentran en condiciones adecuadas, sin huecos ni desniveles peligrosos.'},
+      {categoria:'A. Instalaciones e infraestructura', aspecto:'Los corrales cuentan con drenaje adecuado y no presentan acumulación excesiva de agua.'},
+      {categoria:'A. Instalaciones e infraestructura', aspecto:'Los techos y estructuras de protección se encuentran en buen estado, cuando aplica.'},
+      {categoria:'B. Orden y aseo', aspecto:'El área se encuentra limpia y libre de residuos.'},
+      {categoria:'B. Orden y aseo', aspecto:'No hay acumulación excesiva de estiércol.'},
+      {categoria:'B. Orden y aseo', aspecto:'Los pasillos y zonas de circulación se encuentran despejados.'},
+      {categoria:'B. Orden y aseo', aspecto:'Las herramientas y elementos de trabajo están organizados.'},
+      {categoria:'B. Orden y aseo', aspecto:'No se observa presencia excesiva de plagas o animales que puedan generar riesgos.'},
+      {categoria:'C. Bienestar animal', aspecto:'Los animales cuentan con disponibilidad de agua limpia.'},
+      {categoria:'C. Bienestar animal', aspecto:'Los comederos y bebederos se encuentran limpios y en buen estado.'},
+      {categoria:'C. Bienestar animal', aspecto:'Los animales cuentan con espacio suficiente para movilizarse.'},
+      {categoria:'C. Bienestar animal', aspecto:'No se observan animales con heridas o lesiones visibles.'},
+      {categoria:'C. Bienestar animal', aspecto:'Los animales se encuentran en condiciones generales adecuadas.'},
+      {categoria:'C. Bienestar animal', aspecto:'Las instalaciones permiten el manejo seguro de los animales.'},
+      {categoria:'D. Seguridad y salud en el trabajo', aspecto:'Los trabajadores utilizan botas de seguridad o de caucho adecuadas para la labor.'},
+      {categoria:'D. Seguridad y salud en el trabajo', aspecto:'Se utilizan los elementos de protección personal requeridos para las actividades.'},
+      {categoria:'D. Seguridad y salud en el trabajo', aspecto:'Las zonas de circulación permiten el desplazamiento seguro de los trabajadores.'},
+      {categoria:'D. Seguridad y salud en el trabajo', aspecto:'Se cuenta con condiciones seguras para el ingreso y salida de los animales.'},
+      {categoria:'D. Seguridad y salud en el trabajo', aspecto:'Se identifican y controlan los riesgos de golpes, pisotones, atrapamientos o embestidas.'},
+      {categoria:'D. Seguridad y salud en el trabajo', aspecto:'Los trabajadores conocen las medidas de seguridad para el manejo del ganado.'},
+      {categoria:'D. Seguridad y salud en el trabajo', aspecto:'Se cuenta con botiquín o acceso a elementos de primeros auxilios.'},
+    ],
+    accionesMejora: {
+      max: 4, titulo: 'Hallazgos identificados', etiqueta: 'Hallazgo', etiquetaPlural: 'hallazgo(s)',
+      campos: [
+        {id:'descripcion', ph:'Descripción del hallazgo'},
+        {id:'accion', ph:'Acción correctiva o preventiva'},
+        {id:'responsable', ph:'Responsable'},
+        {id:'fecha', ph:'Fecha de cumplimiento', tipo:'date'},
+      ],
+    },
+    fotos: {max: 3},
+    estadoGeneral: {label: 'Estado general del corral', requerido: true,
+      opciones: ['Bueno', 'Aceptable, requiere mejoras', 'Deficiente, requiere intervención']},
+    firmas: [
+      {key:'responsable', label:'Firma del responsable de la inspección'},
+      {key:'area', label:'Firma del responsable del área', opcional:true},
+    ],
+  },
   locativa: {
     paWebhookUrl: 'https://defaultc30619979f9e4ad6a335e5e17e5f19.4a.environment.api.powerplatform.com:443/powerautomate/automations/direct/cu/11/workflows/6ec97121ab6942f6a51167419db8554b/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=FJbQgKrXghPPeXfDUaaJg--QRaxfNuKTg5_EvWiUtlk',
     titulo: 'Inspección locativa', codigo: 'SST-FT-019',
@@ -4912,6 +4987,26 @@ function udRenderScreenHtml(tipo, cfg){
         ${f.key==='responsable' ? '<p class="sig-note">Se guarda para toda la sesión — solo hace falta firmar una vez, salvo que la limpies.</p>' : ''}
       </div>`).join('');
   const pillsHtml = cfg.estadoOpciones.map(v=>`<div class="pill" data-v="${v}">${v}</div>`).join('');
+  const nFotos = cfg.fotos ? cfg.fotos.max : 1;
+  let fotosCardHtml = `
+      <div class="card">
+        <h2>Foto<small>Opcional</small></h2>
+        <input type="file" id="${tipo}_fotoInput" accept="image/*" capture="environment">
+        <div class="photo-btn" id="${tipo}_fotoBtn">📷 Adjuntar foto</div>
+      </div>`;
+  if(cfg.fotos){
+    let slots = '';
+    for(let i=0;i<nFotos;i++){
+      const sf = i ? i : '';
+      slots += '<label>Fotografía '+(i+1)+'</label><input type="file" id="'+tipo+'_fotoInput'+sf+'" accept="image/*" capture="environment"><div class="photo-btn" id="'+tipo+'_fotoBtn'+sf+'">📷 Adjuntar foto</div>';
+    }
+    fotosCardHtml = '<div class="card"><h2>Registro fotográfico<small>Opcional · hasta '+nFotos+'</small></h2>'+slots+'</div>';
+  }
+  let estadoGeneralHtml = '';
+  if(cfg.estadoGeneral){
+    estadoGeneralHtml = '<label>'+cfg.estadoGeneral.label+'</label><div class="pills ud-estadogen" id="'+tipo+'_estadoGen" style="flex-direction:column;">'
+      + cfg.estadoGeneral.opciones.map(o=>'<div class="pill" data-v="'+o+'">'+o+'</div>').join('') + '</div>';
+  }
   const leyenda = cfg.estadoOpciones.map(v=>v+' = '+UD_ESTADO_LABEL[v]).join(' · ');
 
   return `
@@ -4950,19 +5045,14 @@ function udRenderScreenHtml(tipo, cfg){
       </div>
 ${cfg.accionesMejora ? `
       <div class="card">
-        <h2>Acciones de mejora<small>Opcional</small></h2>
+        <h2>${cfg.accionesMejora.titulo || 'Acciones de mejora'}<small>Opcional</small></h2>
         <div id="${tipo}_accionesWrap"></div>
       </div>` : ''}
       <div class="card">
         <h2>Observaciones</h2>
-        <textarea id="${tipo}_fObs" placeholder="Observaciones generales"></textarea>
+        <textarea id="${tipo}_fObs" placeholder="Observaciones generales"></textarea>${estadoGeneralHtml}
       </div>
-
-      <div class="card">
-        <h2>Foto<small>Opcional</small></h2>
-        <input type="file" id="${tipo}_fotoInput" accept="image/*" capture="environment">
-        <div class="photo-btn" id="${tipo}_fotoBtn">📷 Adjuntar foto</div>
-      </div>
+${fotosCardHtml}
       ${firmasHtml}
 
       <button class="btn btn-primary" id="${tipo}_btnGuardar">Guardar y agregar otra inspección</button>
@@ -5009,6 +5099,7 @@ function udActualizarBannerPA(tipo){
     ? '⏳ '+n+' inspección(es) por enviar al Excel central'
     : '📴 Sin señal — '+n+' inspección(es) esperan para enviarse');
   if(m>0) partes.push('⚠️ '+m+' sin confirmar: revisa si están en el Excel');
+  if(!UNIDAD_CONFIGS[tipo].paWebhookUrl) partes.push('este formulario aún no tiene el flujo conectado');
   texto.textContent = partes.join(' · ');
 }
 
@@ -5026,7 +5117,7 @@ async function udIntentarEnvioPA(tipo, record){
     campos,
     observaciones: record.observaciones,
     firmas,
-    fotos: record.foto_data ? [soloBase64(record.foto_data)] : [],
+    fotos: (record.fotos_data && record.fotos_data.length) ? record.fotos_data.map(f=>soloBase64(f)) : (record.foto_data ? [soloBase64(record.foto_data)] : []),
     renglones: (record.items||[]).map(it=>{
       const r = { detalle: it.aspecto, estado: it.estado || '', observacion: it.observacion || '' };
       if(cfg.itemCantidad) r.cantidad = it.cantidad || '';
@@ -5035,6 +5126,7 @@ async function udIntentarEnvioPA(tipo, record){
       return r;
     }),
     acciones: cfg.accionesMejora ? (record.acciones||[]) : undefined,
+    estado_general: cfg.estadoGeneral ? (record.estado_general || '') : undefined,
   };
   const ctrl = new AbortController();
   const timer = setTimeout(()=>ctrl.abort(), UD_PA_TIMEOUT_MS);
@@ -5092,7 +5184,7 @@ async function udPasadaDeEnvio(tipo, manual, soloId){
 async function udEnviarPendientes(tipo, manual, soloId){
   const cfg = UNIDAD_CONFIGS[tipo];
   const st = udState[tipo];
-  if(!cfg.paWebhookUrl) return;
+  if(!cfg.paWebhookUrl){ if(manual) toast('Este formulario aún no tiene flujo conectado'); return; }
   if(st.enviandoPA){ if(manual) toast('Ya hay un envío en curso, espera un momento'); return; }
   if(!navigator.onLine){
     if(manual) toast('Sin señal: se enviará solo cuando vuelva');
@@ -5205,13 +5297,20 @@ function udBuildAcciones(tipo){
   wrap.innerHTML = '';
   for(let i=0;i<cfg.accionesMejora.max;i++){
     const row = document.createElement('div');
-    row.className = 'accion-row';
+    row.className = 'accion-row' + (cfg.accionesMejora.campos ? ' accion-row-col' : '');
     row.dataset.idx = i;
-    row.innerHTML = `
+    if(cfg.accionesMejora.campos){
+      row.innerHTML = '<div class="ac-titulo">'+(cfg.accionesMejora.etiqueta || 'Acción')+' '+(i+1)+'</div>' + cfg.accionesMejora.campos.map(c=>
+        c.tipo === 'date'
+          ? '<label class="ac-lbl">'+c.ph+'</label><input type="date" class="ac-campo" data-k="'+c.id+'">'
+          : '<input type="text" class="ac-campo" data-k="'+c.id+'" placeholder="'+c.ph+'">').join('');
+    }else{
+      row.innerHTML = `
       <input type="text" class="ac-actividad" placeholder="Actividad a desarrollar">
       <input type="text" class="ac-responsable" placeholder="Responsable">
       <input type="date" class="ac-fecha">
     `;
+    }
     wrap.appendChild(row);
   }
 }
@@ -5237,6 +5336,33 @@ function udSetupPhoto(tipo){
   });
 }
 
+// formularios que piden varias fotos (cfg.fotos.max): un botón por fotografía; la primera conserva los ids de siempre
+function udSetupFotos(tipo){
+  const st = udState[tipo];
+  const cfg = UNIDAD_CONFIGS[tipo];
+  st.fotosData = Array.from({length: cfg.fotos.max}, ()=>null);
+  for(let i=0;i<cfg.fotos.max;i++){
+    const sf = i ? i : '';
+    const btn = document.getElementById(tipo+'_fotoBtn'+sf);
+    const input = document.getElementById(tipo+'_fotoInput'+sf);
+    btn.addEventListener('click', ()=>input.click());
+    input.addEventListener('change', async ()=>{
+      const f = input.files[0];
+      if(!f) return;
+      btn.innerHTML = 'Procesando foto…';
+      const data = await comprimirFoto(f);
+      if(data){
+        st.fotosData[i] = data;
+        btn.classList.add('has');
+        btn.innerHTML = `<img src="${data}"> Foto adjunta — toca para cambiar`;
+      }else{
+        btn.innerHTML = '📷 Adjuntar foto';
+        toast('No se pudo procesar la foto, intenta de nuevo');
+      }
+    });
+  }
+}
+
 function udEsMalo(estado){ return estado==='M' || estado==='NC'; }
 
 function udResetForm(tipo){
@@ -5250,6 +5376,18 @@ function udResetForm(tipo){
   btn.classList.remove('has');
   btn.innerHTML = '📷 Adjuntar foto';
   document.getElementById(tipo+'_fotoInput').value = '';
+  if(cfg.fotos){
+    st.fotosData = st.fotosData.map(()=>null);
+    for(let i=1;i<cfg.fotos.max;i++){
+      const b = document.getElementById(tipo+'_fotoBtn'+i);
+      b.classList.remove('has'); b.innerHTML = '📷 Adjuntar foto';
+      document.getElementById(tipo+'_fotoInput'+i).value = '';
+    }
+  }
+  if(cfg.estadoGeneral){
+    st.estadoGen = null;
+    document.querySelectorAll('#'+tipo+'_estadoGen .pill').forEach(p=>p.classList.remove('sel'));
+  }
   udBuildItems(tipo);
   udBuildAcciones(tipo);
   // las firmas de rol "responsable" persisten para la sesión; las demás se limpian
@@ -5297,11 +5435,20 @@ function udGuardar(tipo){
     items.push(item);
   });
   if(faltaItem){ toast('Falta calificar algún aspecto del checklist'); return; }
+  if(cfg.estadoGeneral && cfg.estadoGeneral.requerido && !st.estadoGen){ toast('Falta: '+cfg.estadoGeneral.label); return; }
 
   let acciones = [];
   if(cfg.accionesMejora){
     const accWrap = document.getElementById(tipo+'_accionesWrap');
     accWrap.querySelectorAll('.accion-row').forEach(row=>{
+      if(cfg.accionesMejora.campos){
+        // la primera columna manda: si está vacía, la fila se omite
+        const obj = {};
+        cfg.accionesMejora.campos.forEach(c=>{ obj[c.id] = row.querySelector('[data-k="'+c.id+'"]').value.trim(); });
+        if(!obj[cfg.accionesMejora.campos[0].id]) return;
+        acciones.push(obj);
+        return;
+      }
       const actividad = row.querySelector('.ac-actividad').value.trim();
       if(!actividad) return; // fila vacía, se omite
       acciones.push({
@@ -5325,7 +5472,9 @@ function udGuardar(tipo){
     identificador, responsable, campos, items, acciones,
     observaciones: document.getElementById(tipo+'_fObs').value.trim(),
     firmas_data,
-    foto_data: st.fotoData || null,
+    foto_data: cfg.fotos ? ((st.fotosData||[]).find(Boolean) || null) : (st.fotoData || null),
+    fotos_data: cfg.fotos ? (st.fotosData||[]).filter(Boolean) : undefined,
+    estado_general: cfg.estadoGeneral ? (st.estadoGen || '') : undefined,
     codigo: prevRec ? (prevRec.codigo || udGenerarCodigo(document.getElementById(tipo+'_fFecha').value, identificador)) : udGenerarCodigo(document.getElementById(tipo+'_fFecha').value, identificador),
     pa_estado: prevRec ? (prevRec.pa_estado || 'pendiente') : 'pendiente',
     pa_enviado_at: prevRec ? prevRec.pa_enviado_at : undefined,
@@ -5397,6 +5546,10 @@ function udEditar(tipo, id){
     (d.acciones||[]).forEach((a, i)=>{
       const row = accWrap.querySelector(`.accion-row[data-idx="${i}"]`);
       if(!row) return;
+      if(cfg.accionesMejora.campos){
+        cfg.accionesMejora.campos.forEach(c=>{ row.querySelector('[data-k="'+c.id+'"]').value = a[c.id] || ''; });
+        return;
+      }
       row.querySelector('.ac-actividad').value = a.actividad || '';
       row.querySelector('.ac-responsable').value = a.responsable || '';
       row.querySelector('.ac-fecha').value = a.fecha || '';
@@ -5409,6 +5562,19 @@ function udEditar(tipo, id){
   const btn = document.getElementById(tipo+'_fotoBtn');
   if(st.fotoData){ btn.classList.add('has'); btn.innerHTML = `<img src="${st.fotoData}"> Foto adjunta — toca para cambiar`; }
   else{ btn.classList.remove('has'); btn.innerHTML = '📷 Adjuntar foto'; }
+
+  if(cfg.fotos){
+    st.fotosData = Array.from({length: cfg.fotos.max}, (_,i)=> (d.fotos_data && d.fotos_data[i]) || null);
+    st.fotosData.forEach((data, i)=>{
+      const b = document.getElementById(tipo+'_fotoBtn'+(i ? i : ''));
+      if(data){ b.classList.add('has'); b.innerHTML = `<img src="${data}"> Foto adjunta — toca para cambiar`; }
+      else{ b.classList.remove('has'); b.innerHTML = '📷 Adjuntar foto'; }
+    });
+  }
+  if(cfg.estadoGeneral){
+    st.estadoGen = d.estado_general || null;
+    document.querySelectorAll('#'+tipo+'_estadoGen .pill').forEach(p=> p.classList.toggle('sel', p.dataset.v === st.estadoGen));
+  }
 
   document.getElementById(tipo+'_editBanner').classList.remove('hidden');
   document.getElementById('screen-'+tipo).querySelector('.tab[data-tab="nueva"]').click();
@@ -5445,13 +5611,14 @@ function udRenderHistorial(tipo){
             <b>${d.identificador||'—'}</b>
             <div class="hist-meta">${d.fecha||''}</div>
           </div>
-          ${d.foto_data ? `<img class="foto-thumb" src="${d.foto_data}" alt="Foto">` : ''}
+          ${(d.fotos_data && d.fotos_data.length) ? d.fotos_data.map(f=>`<img class="foto-thumb" src="${f}" alt="Foto">`).join('') : (d.foto_data ? `<img class="foto-thumb" src="${d.foto_data}" alt="Foto">` : '')}
           <span class="badge ${malos>0?'M':'ok'}">${malos>0? malos+' alerta(s)' : 'OK'}</span>
         </div>
         ${d.responsable ? `<div class="hist-meta">Responsable: ${d.responsable}</div>` : ''}
+        ${d.estado_general ? `<div class="hist-meta">Estado general: <b>${escapeHtml(d.estado_general)}</b></div>` : ''}
         ${badgesItems ? `<div class="hist-badges">${badgesItems}</div>` : ''}
         ${d.observaciones ? `<div class="hist-obs">"${escapeHtml(d.observaciones)}"</div>` : ''}
-        ${(d.acciones&&d.acciones.length>0) ? `<div class="hist-meta">📋 ${d.acciones.length} acción(es) de mejora registrada(s)</div>` : ''}
+        ${(d.acciones&&d.acciones.length>0) ? `<div class="hist-meta">📋 ${d.acciones.length} ${(cfg.accionesMejora && cfg.accionesMejora.etiquetaPlural) || 'acción(es) de mejora'} registrada(s)</div>` : ''}
         <div class="sig-thumbs">${firmasHtml}</div>
         ${d.pa_estado==='pendiente' ? (st.enviandoId===d.id ? '<div class="hist-badges"><span class="badge warn">📤 Enviando…</span></div>' : '<div class="hist-badges"><span class="badge warn">⏳ Pendiente de enviar</span></div><div class="hist-actions"><button class="btn-edit" data-enviarid="'+d.id+'" type="button">↑ Enviar ahora</button></div>') : d.pa_estado==='revisar' ? '<div class="hist-badges"><span class="badge M">⚠️ Sin confirmar — revisa si está en el Excel</span></div><div class="hist-actions"><button class="btn-edit" data-reenviarid="'+d.id+'" type="button">↻ Reenviar</button><button class="btn-edit" data-okid="'+d.id+'" type="button">✓ Ya está en el Excel</button></div>' : d.pa_estado==='enviado' ? '<div class="hist-badges"><span class="badge ok">✓ Enviada</span></div>' : ''}
         <div class="hist-actions">
@@ -5511,10 +5678,12 @@ async function udExportarExcel(tipo){
       ...(cfg.firmas.some(f=>f.key==='responsable') ? [{header:'Responsable', key:'responsable', width:20}] : []),
       {header:'Malos', key:'malos', width:9},
       {header:'Observaciones', key:'obs', width:30},
+      ...(cfg.estadoGeneral ? [{header:cfg.estadoGeneral.label, key:'estadoGen', width:24}] : []),
       ...firmaCols,
       {header:'Foto', width:14},
+      ...(cfg.fotos ? Array.from({length: cfg.fotos.max-1}, (_,i)=>({header:'Foto '+(i+2), width:14})) : []),
     ];
-    const colFirmaStart = 2 + campoCols.length + (cfg.firmas.some(f=>f.key==='responsable')?1:0) + 2 + 1;
+    const colFirmaStart = 2 + campoCols.length + (cfg.firmas.some(f=>f.key==='responsable')?1:0) + 2 + 1 + (cfg.estadoGeneral ? 1 : 0);
     const colFoto = colFirmaStart + cfg.firmas.length;
     const colMalos = 2 + campoCols.length + (cfg.firmas.some(f=>f.key==='responsable')?1:0) + 1;
 
@@ -5523,6 +5692,7 @@ async function udExportarExcel(tipo){
         malos: d.items.filter(i=>udEsMalo(i.estado)).length, obs: d.observaciones||''};
       if(cfg.firmas.some(f=>f.key==='responsable')) row.responsable = d.responsable||'';
       cfg.camposHeader.forEach(c=>{ row['c_'+c.id] = (d.campos&&d.campos[c.id])||''; });
+      if(cfg.estadoGeneral) row.estadoGen = d.estado_general || '';
       wsR.addRow(row);
     });
     styleHeader(wsR.getRow(1));
@@ -5550,6 +5720,15 @@ async function udExportarExcel(tipo){
           const imgId = wb.addImage({buffer, extension});
           wsR.addImage(imgId, {tl:{col:colFoto-0.95, row:rowIdx-0.95}, ext:{width:50, height:40}});
         }catch(e){}
+      }
+      if(cfg.fotos){
+        (d.fotos_data||[]).slice(1).forEach((fd, k)=>{
+          try{
+            const {buffer, extension} = dataURLtoBuffer(fd);
+            const imgId = wb.addImage({buffer, extension});
+            wsR.addImage(imgId, {tl:{col:colFoto+1+k-0.95, row:rowIdx-0.95}, ext:{width:50, height:40}});
+          }catch(e){}
+        });
       }
     });
 
@@ -5583,7 +5762,18 @@ async function udExportarExcel(tipo){
       const todasAcciones = [];
       ordered.forEach(d=>{ (d.acciones||[]).forEach(a=> todasAcciones.push({d, a})); });
       if(todasAcciones.length>0){
-        const wsAc = wb.addWorksheet('Acciones de mejora', {properties:{tabColor:{argb:'FF2B6FD9'}}, views:[{state:'frozen', ySplit:1}]});
+        const wsAc = wb.addWorksheet(cfg.accionesMejora.titulo || 'Acciones de mejora', {properties:{tabColor:{argb:'FF2B6FD9'}}, views:[{state:'frozen', ySplit:1}]});
+        if(cfg.accionesMejora.campos){
+          wsAc.columns = [
+            {header:'Fecha', key:'fecha', width:12}, {header:cfg.idLabel, key:'identificador', width:20},
+            ...cfg.accionesMejora.campos.map(c=>({header:c.ph, key:'k_'+c.id, width: c.tipo==='date' ? 16 : 34})),
+          ];
+          todasAcciones.forEach(({d,a})=>{
+            const row = {fecha:d.fecha||'', identificador:d.identificador||''};
+            cfg.accionesMejora.campos.forEach(c=>{ row['k_'+c.id] = a[c.id] || ''; });
+            wsAc.addRow(row);
+          });
+        }else{
         wsAc.columns = [
           {header:'Fecha', key:'fecha', width:12}, {header:cfg.idLabel, key:'identificador', width:20},
           {header:'Actividad a desarrollar', key:'actividad', width:40},
@@ -5592,6 +5782,7 @@ async function udExportarExcel(tipo){
         todasAcciones.forEach(({d,a})=>{
           wsAc.addRow({fecha:d.fecha||'', identificador:d.identificador||'', actividad:a.actividad||'', responsable:a.responsable||'', fc:a.fecha||''});
         });
+        }
         styleHeader(wsAc.getRow(1));
         styleBody(wsAc);
         wsAc.autoFilter = {from:{row:1,column:1}, to:{row:1,column:wsAc.columns.length}};
@@ -5613,7 +5804,7 @@ async function udExportarExcel(tipo){
 
 function udInit(tipo){
   const cfg = UNIDAD_CONFIGS[tipo];
-  udState[tipo] = {records:[], editingId:null, sigPads:{}, fotoData:null, itemState:{}, enviandoPA:false, enviandoId:null};
+  udState[tipo] = {records:[], editingId:null, sigPads:{}, fotoData:null, fotosData:[], estadoGen:null, itemState:{}, enviandoPA:false, enviandoId:null};
   const screen = document.getElementById('screen-'+tipo);
   screen.innerHTML = udRenderScreenHtml(tipo, cfg);
   document.getElementById(tipo+'_fFecha').value = new Date().toISOString().slice(0,10);
@@ -5623,7 +5814,14 @@ function udInit(tipo){
   cfg.firmas.forEach(f=>{
     createSignaturePad(udState[tipo].sigPads, f.key, tipo+'_sig_'+f.key, tipo+'_sigClear_'+f.key, null);
   });
-  udSetupPhoto(tipo);
+  if(cfg.fotos) udSetupFotos(tipo); else udSetupPhoto(tipo);
+  if(cfg.estadoGeneral){
+    document.querySelectorAll('#'+tipo+'_estadoGen .pill').forEach(p=> p.addEventListener('click', ()=>{
+      document.querySelectorAll('#'+tipo+'_estadoGen .pill').forEach(x=>x.classList.remove('sel'));
+      p.classList.add('sel');
+      udState[tipo].estadoGen = p.dataset.v;
+    }));
+  }
   setupTabs(screen, ()=>udRenderHistorial(tipo));
   document.getElementById(tipo+'_btnGuardar').addEventListener('click', ()=>udGuardar(tipo));
   document.getElementById(tipo+'_btnCancelarEdicion').addEventListener('click', ()=>udCancelarEdicion(tipo));
@@ -7083,7 +7281,7 @@ function incInit(){
 }
 
 // Versión de la app: se muestra al final de la pantalla de inicio para saber qué copia tiene cada celular.
-const APP_VERSION = '2026-11-03 20:09';
+const APP_VERSION = '2026-11-11 13:33';
 
 // =========================== INICIO: buscador, pendientes y checklists ===========================
 function quitarTildes(s){ return String(s).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,''); }
@@ -7146,7 +7344,7 @@ function refrescarInicio(){
 }
 
 function instalarInicio(){
-  document.getElementById('homeVersion').textContent = 'Versión ' + APP_VERSION + ' · Entrega de EPP: ' + (ENT_PA_WEBHOOK_URL ? 'flujo conectado' : 'sin flujo conectado') + ' · Reporte de incidente: ' + (INC_PA_WEBHOOK_URL ? 'flujo conectado' : 'sin flujo conectado');
+  document.getElementById('homeVersion').textContent = 'Versión ' + APP_VERSION + ' · Entrega de EPP: ' + (ENT_PA_WEBHOOK_URL ? 'flujo conectado' : 'sin flujo conectado') + ' · Reporte de incidente: ' + (INC_PA_WEBHOOK_URL ? 'flujo conectado' : 'sin flujo conectado') + ' · Corrales de ganadería: ' + (UNIDAD_CONFIGS.corrales.paWebhookUrl ? 'flujo conectado' : 'sin flujo conectado');
   document.getElementById('homeBuscar').addEventListener('input', filtrarInicio);
   window.addEventListener('online', refrescarInicio);
   window.addEventListener('offline', refrescarInicio);
@@ -7216,7 +7414,7 @@ function vigilarChecklist(wrap){
   ['guadana','bombaespalda','bombainsufladora','motosierra'].forEach(eqpInit);
   ['alturas'].forEach(eqpInit);
   ['zorrillos','vagones','tractores','herramientas'].forEach(udInit);
-  ['locativa','rotulos','kitderrames'].forEach(udInit);
+  ['locativa','rotulos','kitderrames','corrales'].forEach(udInit);
   ['vehiculo','motos','bus'].forEach(udInit);
   ['bicicletas','camilla'].forEach(udInit);
   entInit();
