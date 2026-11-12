@@ -858,7 +858,7 @@
           <span class="home-icon" style="background:var(--good-bg);color:var(--good);">🐄</span>
           <span class="home-body">
             <span class="home-title">Corrales de ganadería</span>
-            <span class="home-desc">Instalaciones, orden y aseo, bienestar animal y seguridad</span>
+            <span class="home-desc">Instalaciones, orden y aseo, y seguridad</span>
             <span class="home-code">Sin código oficial</span>
           </span>
           <span class="home-pend hidden" data-pend="corrales"></span>
@@ -4623,7 +4623,7 @@ const UNIDAD_CONFIGS = {
   corrales: {
     paWebhookUrl: '', // CORRALES_URL (se completa cuando exista el flujo)
     titulo: 'Corrales de ganadería', codigo: '',
-    subtitulo: 'Instalaciones, orden y aseo, bienestar animal y seguridad',
+    subtitulo: 'Instalaciones, orden y aseo, y seguridad',
     idLabel: 'Finca / Plantación', idPlaceholder: 'Nombre de la finca o plantación',
     camposHeader: [
       {id:'cargo', label:'Cargo'},
@@ -4644,19 +4644,13 @@ const UNIDAD_CONFIGS = {
       {categoria:'B. Orden y aseo', aspecto:'Los pasillos y zonas de circulación se encuentran despejados.'},
       {categoria:'B. Orden y aseo', aspecto:'Las herramientas y elementos de trabajo están organizados.'},
       {categoria:'B. Orden y aseo', aspecto:'No se observa presencia excesiva de plagas o animales que puedan generar riesgos.'},
-      {categoria:'C. Bienestar animal', aspecto:'Los animales cuentan con disponibilidad de agua limpia.'},
-      {categoria:'C. Bienestar animal', aspecto:'Los comederos y bebederos se encuentran limpios y en buen estado.'},
-      {categoria:'C. Bienestar animal', aspecto:'Los animales cuentan con espacio suficiente para movilizarse.'},
-      {categoria:'C. Bienestar animal', aspecto:'No se observan animales con heridas o lesiones visibles.'},
-      {categoria:'C. Bienestar animal', aspecto:'Los animales se encuentran en condiciones generales adecuadas.'},
-      {categoria:'C. Bienestar animal', aspecto:'Las instalaciones permiten el manejo seguro de los animales.'},
-      {categoria:'D. Seguridad y salud en el trabajo', aspecto:'Los trabajadores utilizan botas de seguridad o de caucho adecuadas para la labor.'},
-      {categoria:'D. Seguridad y salud en el trabajo', aspecto:'Se utilizan los elementos de protección personal requeridos para las actividades.'},
-      {categoria:'D. Seguridad y salud en el trabajo', aspecto:'Las zonas de circulación permiten el desplazamiento seguro de los trabajadores.'},
-      {categoria:'D. Seguridad y salud en el trabajo', aspecto:'Se cuenta con condiciones seguras para el ingreso y salida de los animales.'},
-      {categoria:'D. Seguridad y salud en el trabajo', aspecto:'Se identifican y controlan los riesgos de golpes, pisotones, atrapamientos o embestidas.'},
-      {categoria:'D. Seguridad y salud en el trabajo', aspecto:'Los trabajadores conocen las medidas de seguridad para el manejo del ganado.'},
-      {categoria:'D. Seguridad y salud en el trabajo', aspecto:'Se cuenta con botiquín o acceso a elementos de primeros auxilios.'},
+      {categoria:'C. Seguridad y salud en el trabajo', aspecto:'Los trabajadores utilizan botas de seguridad o de caucho adecuadas para la labor.'},
+      {categoria:'C. Seguridad y salud en el trabajo', aspecto:'Se utilizan los elementos de protección personal requeridos para las actividades.'},
+      {categoria:'C. Seguridad y salud en el trabajo', aspecto:'Las zonas de circulación permiten el desplazamiento seguro de los trabajadores.'},
+      {categoria:'C. Seguridad y salud en el trabajo', aspecto:'Se cuenta con condiciones seguras para el ingreso y salida de los animales.'},
+      {categoria:'C. Seguridad y salud en el trabajo', aspecto:'Se identifican y controlan los riesgos de golpes, pisotones, atrapamientos o embestidas.'},
+      {categoria:'C. Seguridad y salud en el trabajo', aspecto:'Los trabajadores conocen las medidas de seguridad para el manejo del ganado.'},
+      {categoria:'C. Seguridad y salud en el trabajo', aspecto:'Se cuenta con botiquín o acceso a elementos de primeros auxilios.'},
     ],
     accionesMejora: {
       max: 4, titulo: 'Hallazgos identificados', etiqueta: 'Hallazgo', etiquetaPlural: 'hallazgo(s)',
@@ -7283,7 +7277,7 @@ function incInit(){
 }
 
 // Versión de la app: se muestra al final de la pantalla de inicio para saber qué copia tiene cada celular.
-const APP_VERSION = '2026-11-12 13:37';
+const APP_VERSION = '2026-11-12 20:46';
 
 // =========================== INICIO: buscador, pendientes y checklists ===========================
 function quitarTildes(s){ return String(s).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,''); }
