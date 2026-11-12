@@ -6438,7 +6438,7 @@ function entInit(){
 // =========================== REPORTE DE INCIDENTE (formato de la ARL) ===========================
 // Quién se accidentó (II), cuándo y dónde pasó (III) y qué pasó (IV: solo la descripción).
 // Va a su propio Excel (tabla TablaIncidentes) por un flujo de Power Automate.
-const INC_PA_WEBHOOK_URL = '';   // se completa cuando el flujo de Reporte de incidente esté listo
+const INC_PA_WEBHOOK_URL = 'https://defaultc30619979f9e4ad6a335e5e17e5f19.4a.environment.api.powerplatform.com:443/powerautomate/automations/direct/cu/25/workflows/a0458d4a49b644ae80e2c3a096503648/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=EmFgn4t1TQzsWFUtXPcLcp3-bYJge3fl547Q9nhUAZw';
 const INC_STORAGE_KEY = 'inc_records_v1';
 const INC_PA_TIMEOUT_MS = 100000;
 const INC_PA_ENFRIAMIENTO_MS = 10*60*1000;
@@ -6877,6 +6877,8 @@ function incGuardar(){
   if(!d.afectado_cedula){ toast('Falta la cédula de la persona a quien le ocurrió el incidente'); return; }
   if(!d.afectado_nombre){ toast('Faltan los nombres completos de la persona a quien le ocurrió el incidente'); return; }
   if(!d.descripcion){ toast('Falta la descripción del incidente'); return; }
+  if(!incSigPads.trabajador.drawn){ toast('Falta la firma del trabajador'); return; }
+  if(!incSigPads.responsable.drawn){ toast('Falta la firma del responsable'); return; }
 
   const prev = incEditingId ? incRecords.find(r=>r.id===incEditingId) : null;
   d.dia_semana = incDiaDeFecha(d.fecha_incidente);
@@ -7281,7 +7283,7 @@ function incInit(){
 }
 
 // Versión de la app: se muestra al final de la pantalla de inicio para saber qué copia tiene cada celular.
-const APP_VERSION = '2026-11-11 13:33';
+const APP_VERSION = '2026-11-12 13:37';
 
 // =========================== INICIO: buscador, pendientes y checklists ===========================
 function quitarTildes(s){ return String(s).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,''); }
