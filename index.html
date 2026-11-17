@@ -937,11 +937,13 @@
         <div class="ac-list hidden" id="epp_wNombreList"></div>
       </div>
       <div id="epp_wCedulaTag" class="cedula-tag hidden"></div>
-      <label>Labor (según la matriz EPP)</label>
+      <label>Cargo o labor (según la matriz EPP)</label>
       <select id="epp_wLabor"><option value="">Elige la labor…</option></select>
       <div id="epp_laborNota" class="hint hidden"></div>
-      <label>Cargo o labor</label>
-      <input type="text" id="epp_wCargo" placeholder="Ej: Guadañador">
+      <div id="epp_cargoOtraWrap" class="hidden">
+        <label>Escribe la labor</label>
+        <input type="text" id="epp_wCargo" placeholder="Ej: Guadañador">
+      </div>
     </div>
 
     <div class="card">
@@ -1559,6 +1561,9 @@ function eppSetupLabor(){
   sel.addEventListener('change', ()=>{
     const nota = document.getElementById('epp_laborNota');
     eppBuildItems();
+    const otraWrap = document.getElementById('epp_cargoOtraWrap');
+    if(sel.value === 'otra'){ otraWrap.classList.remove('hidden'); document.getElementById('epp_wCargo').value = ''; }
+    else { otraWrap.classList.add('hidden'); document.getElementById('epp_wCargo').value = ''; }
     if(sel.value === '' || sel.value === 'otra'){ nota.classList.add('hidden'); return; }
     const l = LABORES_EPP[+sel.value];
     document.getElementById('epp_wCargo').value = l.n;
@@ -1680,6 +1685,7 @@ function resetWorkerForm(){
   document.getElementById('epp_fotoInput').value = '';
   eppBuildItems();
   document.getElementById('epp_wLabor').value = '';
+  document.getElementById('epp_cargoOtraWrap').classList.add('hidden');
   document.getElementById('epp_laborNota').classList.add('hidden');
   eppSigPads.trabajador.clear();
 }
@@ -1862,7 +1868,7 @@ function guardarTrabajador(){
 
   if(!inspector){ toast('Falta el nombre de quien inspecciona'); return; }
   if(!nombre){ toast('Falta el nombre del trabajador'); return; }
-  if(!cargo){ toast('Falta el cargo o labor'); return; }
+  if(!cargo){ toast('Falta elegir el cargo o labor'); return; }
   if(!eppSigPads.trabajador.drawn){ toast('Falta la firma del trabajador'); return; }
   if(!eppSigPads.inspector.drawn){ toast('Falta la firma de quien inspecciona'); return; }
 
@@ -2035,6 +2041,9 @@ function eppEditarRegistro(id){
   document.getElementById('epp_fRol').value = d.rol || '';
   document.getElementById('epp_wNombre').value = d.nombre_trabajador || '';
   document.getElementById('epp_wCargo').value = d.cargo || '';
+  { const i = LABORES_EPP.findIndex(l=>l.n===d.cargo);
+    document.getElementById('epp_wLabor').value = i>=0 ? String(i) : (d.cargo ? 'otra' : '');
+    document.getElementById('epp_cargoOtraWrap').classList.toggle('hidden', i>=0 || !d.cargo); }
   document.getElementById('epp_wObs').value = d.observaciones || '';
   selectedCedula = d.cedula || null;
   const tag = document.getElementById('epp_wCedulaTag');
@@ -7324,7 +7333,7 @@ function incInit(){
 }
 
 // Versión de la app: se muestra al final de la pantalla de inicio para saber qué copia tiene cada celular.
-const APP_VERSION = '2026-11-17 15:10';
+const APP_VERSION = '2026-11-17 15:40';
 
 // =========================== INICIO: buscador, pendientes y checklists ===========================
 function quitarTildes(s){ return String(s).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,''); }
