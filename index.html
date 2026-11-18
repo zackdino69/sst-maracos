@@ -6510,7 +6510,7 @@ function entInit(){
 // D (Disciplinaria), C (Calidad) o A (Ambiental) y la lista de códigos muestra SOLO los de ese tipo
 // (para Calidad, además, solo los de la labor elegida). Los códigos salen de la hoja GUIA del formato.
 // Va a un Excel (una fila por falta) por un flujo de Power Automate: se conecta con NCR_PA_WEBHOOK_URL.
-const NCR_PA_WEBHOOK_URL = ''; // NCR_URL (se completa cuando exista el flujo)
+const NCR_PA_WEBHOOK_URL = 'https://defaultc30619979f9e4ad6a335e5e17e5f19.4a.environment.api.powerplatform.com:443/powerautomate/automations/direct/cu/29/workflows/24a7b197e3dc4180bad1c6aabfecf4a4/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=YbjuYEGqyVGIETkrjXkJef7o7oaN5iJsJeLC1-ZHtYw';
 const NCR_RECORDS_KEY = 'ncr_records_v1';
 const NCR_MAX_FALTAS = 7;
 const NCR_PA_TIMEOUT_MS = 100000;
@@ -8077,7 +8077,7 @@ function incInit(){
 }
 
 // Versión de la app: se muestra al final de la pantalla de inicio para saber qué copia tiene cada celular.
-const APP_VERSION = '2026-11-18 10:30';
+const APP_VERSION = '2026-11-18 12:30';
 
 // =========================== INICIO: buscador, pendientes y checklists ===========================
 function quitarTildes(s){ return String(s).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,''); }
