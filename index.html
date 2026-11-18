@@ -602,6 +602,16 @@
   .ent-fila-top b{font-size:14px;}
   .ent-quitar{min-height:38px;padding:0 12px;border:1px solid var(--line);border-radius:8px;background:transparent;color:var(--ink-soft);font:inherit;font-size:13px;font-weight:600;cursor:pointer;}
   .ent-fila-2{display:grid;grid-template-columns:92px 1fr;gap:10px;}
+  .ncr-tipos{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:4px 0 6px;}
+  .ncr-tipo{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;min-height:58px;padding:6px 4px;border:2px solid var(--line);border-radius:10px;background:var(--card);color:var(--ink);font:inherit;cursor:pointer;}
+  .ncr-tipo b{font-size:20px;line-height:1;}
+  .ncr-tipo span{font-size:10.5px;font-weight:600;color:var(--ink-soft);}
+  .ncr-tipo.sel{color:#fff;border-color:transparent;}
+  .ncr-tipo.sel span{color:#fff;}
+  .ncr-tipo.ncr-t-S.sel{background:#b23a2e;} .ncr-tipo.ncr-t-D.sel{background:#6b4aa3;}
+  .ncr-tipo.ncr-t-C.sel{background:#c97a22;} .ncr-tipo.ncr-t-A.sel{background:#3d7a4b;}
+  .ncr-info{font-size:12px;font-weight:600;color:var(--ink-soft);background:var(--bg);border-radius:8px;padding:6px 10px;margin:6px 0 2px;}
+  .ncr-fila-3{display:grid;grid-template-columns:96px 1fr;gap:10px;}
   .ent-compromiso{max-height:210px;overflow:auto;border:1px solid var(--line);border-radius:10px;padding:10px 12px;background:var(--bg);font-size:13px;line-height:1.45;color:var(--ink);}
   .ent-compromiso p{margin:0 0 10px;white-space:pre-line;}
   .ent-compromiso p:last-child{margin-bottom:0;}
@@ -640,7 +650,7 @@
         <input type="search" id="homeBuscar" placeholder="Buscar formulario" autocomplete="off" inputmode="search" aria-label="Buscar formulario">
       </div>
       <section class="home-group">
-        <h2 class="home-group-title">Protección y emergencias <span>8</span></h2>
+        <h2 class="home-group-title">Protección y emergencias <span>9</span></h2>
         <div class="home-grid">
         <button class="home-card" data-abrir="epp" type="button">
           <span class="home-icon" style="background:var(--good-bg);color:var(--good);">🦺</span>
@@ -713,6 +723,15 @@
             <span class="home-code">Formato ARL</span>
           </span>
           <span class="home-pend hidden" data-pend="inc"></span>
+        </button>
+        <button class="home-card" data-abrir="ncr" type="button">
+          <span class="home-icon" style="background:var(--bad-bg);color:var(--bad);">📝</span>
+          <span class="home-body">
+            <span class="home-title">Reporte de no conformidad</span>
+            <span class="home-desc">Faltas de seguridad, disciplina, calidad o ambiente, con la acción a tomar</span>
+            <span class="home-code">GE-FT-03</span>
+          </span>
+          <span class="home-pend hidden" data-pend="ncr"></span>
         </button>
         </div>
       </section>
@@ -890,6 +909,7 @@
   <div id="screen-camilla" class="screen hidden"></div>
   <div id="screen-entrega" class="screen hidden"></div>
   <div id="screen-inc" class="screen hidden"></div>
+  <div id="screen-ncr" class="screen hidden"></div>
   <div id="screen-epp" class="screen hidden">
 <div class="app">
 
@@ -6485,6 +6505,730 @@ function entInit(){
 
 
 
+// =========================== REPORTE DE NO CONFORMIDAD (GE-FT-03) ===========================
+// Un reporte = un trabajador + una o varias faltas. Cada falta se clasifica S (Seguridad),
+// D (Disciplinaria), C (Calidad) o A (Ambiental) y la lista de códigos muestra SOLO los de ese tipo
+// (para Calidad, además, solo los de la labor elegida). Los códigos salen de la hoja GUIA del formato.
+// Va a un Excel (una fila por falta) por un flujo de Power Automate: se conecta con NCR_PA_WEBHOOK_URL.
+const NCR_PA_WEBHOOK_URL = ''; // NCR_URL (se completa cuando exista el flujo)
+const NCR_RECORDS_KEY = 'ncr_records_v1';
+const NCR_MAX_FALTAS = 7;
+const NCR_PA_TIMEOUT_MS = 100000;
+const NCR_PA_ENFRIAMIENTO_MS = 10*60*1000;
+const NCR_PA_MAX_DUDOSOS = 2;
+const NCR_TIPOS = [
+  {k:'S', n:'Seguridad'},
+  {k:'D', n:'Disciplinaria'},
+  {k:'C', n:'Calidad'},
+  {k:'A', n:'Ambiental'},
+];
+const NCR_ACCIONES = ['Repaso','Socializa procedimiento','Oportunidad de mejora'];
+const NCR_UNIDADES = ['Evento','Palmas','Racimos','Hectáreas','Metros','Viajes','Bolsas','Días'];
+const NCR_CODIGOS = {"S":[{"c":"S1","t":"No usar los EPP asignados o usarlos en mal estado"},{"c":"S2","t":"Transportar herramientas sin filo protegido"},{"c":"S3","t":"Incumplir el programa de manejo seguro de quimicos"},{"c":"S4","t":"No realizar las calistenias preoperacionales"},{"c":"S5","t":"Incumplir normas de seguridad del procedimiento operativo estandarizado"},{"c":"S6","t":"Dejar el area de trabajo en desorden o sucia"},{"c":"S7","t":"Realizar labores o actividades sin permiso"},{"c":"S8","t":"Manipular equipos o herramientas sin permiso"},{"c":"S9","t":"Almacenar inadecuadamente equipos o herramientas"},{"c":"S10","t":"Incumplir las normas de seguridad vial"},{"c":"S11","t":"Generar condiciones de riesgo para sus compañeros"},{"c":"S12","t":"No reportar los incidentes y accidentes oportunamente"},{"c":"S13","t":"Otras no conformidades de seguridad"}],"D":[{"c":"D1","t":"Incumplir el horario de trabajo"},{"c":"D2","t":"Abandonar el area de trabajo sin autorización"},{"c":"D3","t":"Desobedecer una orden o instrucción"},{"c":"D4","t":"Dar trato irrespetuoso a los compañeros o superiores"},{"c":"D5","t":"Reportar información erronea sobre las labores"},{"c":"D6","t":"No asistir a las actividades a las que es convocado"},{"c":"D7","t":"Dismunir intencionalemente el rendimiento en la labor"},{"c":"D8","t":"Sustraer elemento o insumos de la empresa sin permiso"},{"c":"D9","t":"Presentarse bajo estado de embriaguez"},{"c":"D10","t":"Incitar a otros trabajadores al desconocimiento de órdenes"},{"c":"D11","t":"No entregar los reportes de las labores ejecutadas"},{"c":"D12","t":"Incumplir la Política de sostenibilidad y el código de conducta ética"},{"c":"D13","t":"Destruir o dañar los elementos, animales o bienes de la empresa"},{"c":"D14","t":"Otras no conformidades Disciplinarias"}],"C":[{"c":"C1","t":"Palmas sin fertilizar","g":"Fertilización","r":"0,5 %"},{"c":"C2","t":"Fertilizante mal aplicado","g":"Fertilización","r":"0,5 %"},{"c":"C3","t":"Dosis incorrecta","g":"Fertilización","r":"0,5 %"},{"c":"C4","t":"Regueros","g":"Fertilización","r":"0,5 %"},{"c":"C5","t":"Abono sintapar","g":"Fertilización","r":"0,5 %"},{"c":"C6","t":"No lavar los zorrillos","g":"Fertilización","r":"0,5 %"},{"c":"C7","t":"Área sin tratar","g":"Control químico de arvenses","r":"0 % (tolerancia cero)"},{"c":"C8","t":"Dosis incorrecta","g":"Control químico de arvenses","r":"0,5 %"},{"c":"C9","t":"Reporte de área no tratada","g":"Control químico de arvenses","r":"0 % (tolerancia cero)"},{"c":"C10","t":"Ancho del plato menor a 2,5 mt","g":"Plateo mecánico","r":"0,5 %"},{"c":"C11","t":"Altura de la maleza del plato de 2 cm","g":"Plateo mecánico","r":"0,5 %"},{"c":"C12","t":"Área o palmas sin platear","g":"Plateo mecánico","r":"0 % (tolerancia cero)"},{"c":"C13","t":"Palmas sin podar","g":"Poda y encallada","r":"0,5 %"},{"c":"C14","t":"Palmas con tacos altos","g":"Poda y encallada","r":"0,5 %"},{"c":"C15","t":"Palmas con exceso de poda","g":"Poda y encallada","r":"0,5 %"},{"c":"C16","t":"Hojas en canales","g":"Poda y encallada","r":"0,5 %"},{"c":"C17","t":"Hojas sin encallar","g":"Poda y encallada","r":"0,5 %"},{"c":"C18","t":"Tusas sin retirar del plato","g":"Poda y encallada","r":"0,5 %"},{"c":"C19","t":"Maleza sin cortar","g":"Rocerías","r":"0,5 %"},{"c":"C20","t":"Maleza con cortes altos","g":"Rocerías","r":"0,5 %"},{"c":"C21","t":"Tusa fuera del área de aplicación","g":"Residuos sólidos","r":"5 %"},{"c":"C22","t":"Área sin aplicación","g":"Residuos sólidos","r":"0 % (tolerancia cero)"},{"c":"C23","t":"Racimo sobremaduro","g":"Cosecha: corte y encallado de RFF y hojas","r":"5 %"},{"c":"C24","t":"Racimo verde","g":"Cosecha: corte y encallado de RFF y hojas","r":"0,5 %"},{"c":"C25","t":"Racimo pasado (tusa)","g":"Cosecha: corte y encallado de RFF y hojas","r":"0,5 %"},{"c":"C26","t":"Racimo enfermo","g":"Cosecha: corte y encallado de RFF y hojas","r":"3 %"},{"c":"C27","t":"Racimo con pedúnculo largo","g":"Cosecha: corte y encallado de RFF y hojas","r":"0,5 %"},{"c":"C28","t":"Racimo podrido","g":"Cosecha: corte y encallado de RFF y hojas","r":"0 % (tolerancia cero)"},{"c":"C29","t":"Impurezas","g":"Cosecha: corte y encallado de RFF y hojas","r":"5 %"},{"c":"C30","t":"Racimos sin encallar","g":"Cosecha: corte y encallado de RFF y hojas","r":"0,5 %"},{"c":"C31","t":"Hoja en canales","g":"Cosecha: corte y encallado de RFF y hojas","r":"0,5 %"},{"c":"C32","t":"Pepa sin recoger","g":"Cosecha: corte y encallado de RFF y hojas","r":"0,5 %"},{"c":"C33","t":"Hoja sin encallar / mal encallada","g":"Cosecha: corte y encallado de RFF y hojas","r":"0,5 %"},{"c":"C34","t":"Reporte de racimos inexistentes","g":"Cosecha: corte y encallado de RFF y hojas","r":"0,5 %"},{"c":"C35","t":"Racimos sin cosechar","g":"Cosecha: corte y encallado de RFF y hojas","r":"0,5 %"},{"c":"C36","t":"Estrellas","g":"Cosecha: corte y encallado de RFF y hojas","r":"0,5 %"},{"c":"C37","t":"Racimos sin recoger","g":"Cosecha: cargue de fruto","r":"0,5 %"},{"c":"C38","t":"Regueros fruto suelto sin recoger","g":"Cosecha: cargue de fruto","r":"0,5 %"},{"c":"C39","t":"Montones de fruto suelto sin recoger","g":"Cosecha: cargue de fruto","r":"0,5 %"},{"c":"C40","t":"Pepa o racimos sin recoger en acopio","g":"Cosecha: cargue de fruto","r":"0,5 %"},{"c":"C41","t":"Áreas sin regar y drenar","g":"Riego y drenajes","r":"0,5 %"},{"c":"C42","t":"Canales y zanjas sin limpiar","g":"Riego y drenajes","r":"0,5 %"},{"c":"C43","t":"Trinchos mal realizados","g":"Riego y drenajes","r":"0,5 %"},{"c":"C44","t":"Tapes mal instalados","g":"Riego y drenajes","r":"0,5 %"},{"c":"C45","t":"Tapes sin instalar","g":"Riego y drenajes","r":"0,5 %"},{"c":"C46","t":"Tapes sin quitar","g":"Riego y drenajes","r":"0,5 %"},{"c":"C47","t":"Otras labores de riego y drenajes","g":"Riego y drenajes","r":"0,5 %"},{"c":"C53","t":"Viaje sin entregar a Planta de Beneficio","g":"Transporte de fruto","r":"2 días"},{"c":"C54","t":"Errores en los reportes diligenciados","g":"Transporte de fruto","r":"1 %"},{"c":"C55","t":"Mantenimiento de tractores no realizado","g":"Transporte de fruto","r":"0 % (tolerancia cero)"},{"c":"C56","t":"Sobrecargar la capacidad de cargue del equipo","g":"Transporte de fruto","r":"0,5 %"},{"c":"C57","t":"Pérdida de remisiones","g":"Transporte de fruto","r":"0 % (tolerancia cero)"},{"c":"C58","t":"Daño en equipo por inadecuada operación","g":"Transporte de fruto","r":"0 % (tolerancia cero)"},{"c":"C59","t":"Trampas sin mantenimiento","g":"Trampeo","r":"0,5 %"},{"c":"C60","t":"Trampas mal elaboradas","g":"Trampeo","r":"0,5 %"},{"c":"C61","t":"Trampas sin revisar","g":"Trampeo","r":"0,5 %"},{"c":"C62","t":"Palmas sin monitorear","g":"Censo","r":"0,5 %"},{"c":"C63","t":"Enfermedades no reportadas","g":"Control de plagas y enfermedades","r":"0,5 %"},{"c":"C64","t":"Área sin revisar (strategus)","g":"Control de plagas y enfermedades","r":"0,5 %"},{"c":"C65","t":"Reportes sin entregar","g":"Control de plagas y enfermedades","r":"0,5 %"},{"c":"C66","t":"Palma mal erradicada o tratada","g":"Control de plagas y enfermedades","r":"0,5 %"},{"c":"C67","t":"Galería strategus sin tratar","g":"Control de plagas y enfermedades","r":"0,5 %"},{"c":"C68","t":"Área sin revisar (strategus)","g":"Control de plagas y enfermedades","r":"0,5 %"},{"c":"C69","t":"Hormigueros sin tratar","g":"Control de plagas y enfermedades","r":"0,5 %"},{"c":"C70","t":"Hormigueros mal tratados","g":"Control de plagas y enfermedades","r":"0,5 %"},{"c":"C71","t":"Dosis incorrecta","g":"Control de plagas y enfermedades","r":"0,5 %"},{"c":"C72","t":"Reporte de área no tratada","g":"Control de plagas y enfermedades","r":"0,5 %"},{"c":"C73","t":"Palmas sin desbejucar","g":"Otras labores de sanidad","r":"0,5 %"},{"c":"C74","t":"Palmas sin marcar","g":"Otras labores de sanidad","r":"0,5 %"},{"c":"C75","t":"Palmas mal marcadas","g":"Otras labores de sanidad","r":"0,5 %"},{"c":"C76","t":"Áreas mal aplicadas","g":"Rocerías químicas","r":"0,5 %"},{"c":"C77","t":"Áreas sin aplicar","g":"Rocerías químicas","r":"0,5 %"},{"c":"C78","t":"Incumplimiento POE Polinización criterio inferior al 90 % según GA-FT-026","g":"Polinización: aplicación de polen","r":"90 %"},{"c":"C79","t":"Palmas sin desyerbar","g":"Previvero, vivero y siembra","r":"0,5 %"},{"c":"C80","t":"Palmas mal desyerbadas","g":"Previvero, vivero y siembra","r":"0,5 %"},{"c":"C81","t":"Bolsas mal acomodadas","g":"Previvero, vivero y siembra","r":"0,5 %"},{"c":"C82","t":"Bolsas mal llenadas","g":"Previvero, vivero y siembra","r":"0,5 %"},{"c":"C83","t":"Palmas sin sembrar","g":"Previvero, vivero y siembra","r":"0,5 %"},{"c":"C84","t":"Palmas mal sembradas","g":"Previvero, vivero y siembra","r":"0,5 %"},{"c":"C85","t":"Huecos mal hechos","g":"Previvero, vivero y siembra","r":"0,5 %"},{"c":"C86","t":"Palmas mal ubicadas, cargue y descargue","g":"Previvero, vivero y siembra","r":"0,5 %"},{"c":"C88","t":"Otras labores de previvero, vivero y siembra","g":"Previvero, vivero y siembra","r":"0,5 %"}],"A":[{"c":"C48","t":"Incumplir el compromiso ambiental (no se tala, no se pesca, no se caza, no se contaminan las fuentes de agua)","g":"Política de sostenibilidad","r":"0,5 %"}]};
+const NCR_LABORES = (()=>{ const g=[]; NCR_CODIGOS.C.forEach(x=>{ if(!g.includes(x.g)) g.push(x.g); }); return g; })();
+
+let ncrRecords = [];
+let ncrSigPads = {};
+let ncrEditingId = null;
+let ncrEnviandoPA = false;
+let ncrEnviandoId = null;
+let ncrCedulaAuto = false;
+
+function ncrCodigosDe(tipo, labor){
+  const lista = NCR_CODIGOS[tipo] || [];
+  if(tipo === 'C' && labor && NCR_LABORES.includes(labor)) return lista.filter(x=>x.g === labor);
+  return lista;
+}
+function ncrBuscarCodigo(tipo, codigo){ return (NCR_CODIGOS[tipo]||[]).find(x=>x.c === codigo) || null; }
+
+function ncrLoteSelectHtml(){
+  const grupos = [];
+  INC_LOTES_DATOS.forEach(x=>{
+    let g = grupos.find(y => y.area === x[0]);
+    if(!g){ g = {area:x[0], op:[]}; grupos.push(g); }
+    g.op.push(incLoteTexto(x[0], x[1], x[2]));
+  });
+  return '<select id="ncr_lote"><option value="">---Lugar / lote---</option><option value="No aplica">No aplica</option>' +
+    grupos.map(g=>'<optgroup label="'+escapeHtml(g.area)+'">'+g.op.map(o=>'<option value="'+escapeHtml(o)+'">'+escapeHtml(o)+'</option>').join('')+'</optgroup>').join('') +
+    '</select>';
+}
+
+function ncrRenderScreenHtml(){
+  const laborOpts = NCR_LABORES.map(l=>'<option value="'+escapeHtml(l)+'">'+escapeHtml(l)+'</option>').join('');
+  const unidadOpts = NCR_UNIDADES.map(u=>'<option value="'+escapeHtml(u)+'"></option>').join('');
+  return `
+    <div class="local-note">📱 Cada reporte se guarda en este celular y se envía solo al Excel cuando hay señal. También puedes exportar a Excel desde el Historial.</div>
+    <div id="ncr_paBanner" class="pa-banner hidden">
+      <span id="ncr_paBannerText"></span>
+      <button type="button" id="ncr_btnReenviar">Reenviar ahora</button>
+    </div>
+    <header class="top">
+      <button class="back-btn" type="button" data-volver>← Menú</button>
+      <h1>Reporte de no conformidad · GE-FT-03</h1>
+      <p>Faltas de seguridad, disciplina, calidad o ambiente, con la acción a tomar y firmas</p>
+      <div class="tabs">
+        <button class="tab active" data-tab="nueva">Nuevo reporte</button>
+        <button class="tab" data-tab="historial">Historial <span id="ncr_histCount" class="count-badge hidden">0</span></button>
+      </div>
+    </header>
+
+    <div id="ncr_tab-nueva" class="section" data-tabpanel="nueva">
+      <div id="ncr_editBanner" class="edit-banner hidden">
+        ✏️ Editando un reporte guardado
+        <button type="button" id="ncr_btnCancelarEdicion">Cancelar</button>
+      </div>
+
+      <div class="card">
+        <h2>Datos del reporte</h2>
+        <label>Fecha</label>
+        <input type="date" id="ncr_fFecha">
+        <label>Responsable del reporte (quien reporta)</label>
+        <input type="text" id="ncr_fReporta" placeholder="Ej: Jennifer Sofia Cortes Beltran" autocomplete="off">
+      </div>
+
+      <div class="card">
+        <h2>Trabajador</h2>
+        <label>Nombre del trabajador</label>
+        <div class="ac-wrap">
+          <input type="text" id="ncr_fNombre" placeholder="Escribe para buscar..." autocomplete="off">
+          <div class="ac-list hidden" id="ncr_fNombreList"></div>
+        </div>
+        <label>Cédula</label>
+        <input type="text" id="ncr_fCedula" inputmode="numeric" placeholder="Se llena al elegir al trabajador" autocomplete="off">
+        <label>Labor</label>
+        <select id="ncr_fLabor"><option value="">---Labor---</option>${laborOpts}<option value="otra">Otra labor (escribir)</option></select>
+        <div id="ncr_laborOtraWrap" class="hidden">
+          <label>Escribe la labor</label>
+          <input type="text" id="ncr_fLaborOtra" placeholder="Ej: Tractorista" autocomplete="off">
+        </div>
+        <label>Lugar / lote</label>
+        ${ncrLoteSelectHtml()}
+      </div>
+
+      <div class="card">
+        <h2><span class="prog" id="ncr_cuenta">1 de ${NCR_MAX_FALTAS}</span>Faltas encontradas<small>Elige el tipo y solo verás los códigos de ese tipo</small></h2>
+        <datalist id="ncr_unidadLista">${unidadOpts}</datalist>
+        <div id="ncr_faltasWrap"></div>
+        <button type="button" class="btn btn-ghost" id="ncr_btnAgregar">+ Agregar otra falta</button>
+      </div>
+
+      <div class="card">
+        <h2>Observaciones</h2>
+        <textarea id="ncr_fObs" placeholder="Detalle de lo que se encontró (opcional)"></textarea>
+      </div>
+
+      <div class="card">
+        <h2>Firma de quien reporta</h2>
+        <div class="sig-wrap"><canvas id="ncr_sig_reporta" class="sigcanvas"></canvas></div>
+        <div class="sig-actions"><span class="sig-status" id="ncr_sigReportaStatus"></span><button id="ncr_sigClear_reporta" type="button">Limpiar firma</button></div>
+      </div>
+
+      <div class="card">
+        <h2>Firma del trabajador</h2>
+        <div class="sig-wrap"><canvas id="ncr_sig_trabajador" class="sigcanvas"></canvas></div>
+        <div class="sig-actions"><span></span><button id="ncr_sigClear_trabajador" type="button">Limpiar firma</button></div>
+      </div>
+
+      <button class="btn btn-primary" id="ncr_btnGuardar">Guardar y hacer otro reporte</button>
+      <div id="ncr_recapWrap" style="margin-top:14px;"></div>
+    </div>
+
+    <div id="ncr_tab-historial" class="section hidden" data-tabpanel="historial">
+      <div class="filters">
+        <input type="date" id="ncr_filFecha">
+        <input type="text" id="ncr_filTexto" placeholder="Buscar por nombre o cédula…">
+      </div>
+      <button class="btn btn-ghost" id="ncr_btnExport" style="margin-bottom:12px;">Exportar a Excel</button>
+      <div id="ncr_histList"></div>
+    </div>
+  `;
+}
+
+// ---------- almacenamiento ----------
+function ncrLoadRecords(){
+  try{ ncrRecords = JSON.parse(localStorage.getItem(NCR_RECORDS_KEY) || '[]'); }
+  catch(e){ ncrRecords = []; }
+}
+function ncrSaveRecords(){
+  try{ localStorage.setItem(NCR_RECORDS_KEY, JSON.stringify(ncrRecords)); }
+  catch(e){ toast('⚠️ No se pudo guardar — memoria del celular llena'); }
+  const c = document.getElementById('ncr_histCount');
+  if(c){ c.textContent = ncrRecords.length; c.classList.toggle('hidden', ncrRecords.length===0); }
+}
+function ncrLaborActual(){
+  const sel = document.getElementById('ncr_fLabor').value;
+  return sel === 'otra' ? document.getElementById('ncr_fLaborOtra').value.trim() : sel;
+}
+
+// ---------- faltas ----------
+function ncrFaltasEls(){ return [...document.querySelectorAll('#ncr_faltasWrap .ncr-falta')]; }
+
+function ncrActualizarFaltas(){
+  const filas = ncrFaltasEls();
+  filas.forEach((f,i)=>{
+    f.querySelector('.ncr-num').textContent = 'Falta '+(i+1);
+    f.querySelector('.ncr-quitar').classList.toggle('hidden', filas.length===1);
+  });
+  document.getElementById('ncr_cuenta').textContent = filas.length+' de '+NCR_MAX_FALTAS;
+  document.getElementById('ncr_btnAgregar').classList.toggle('hidden', filas.length>=NCR_MAX_FALTAS);
+}
+
+// Llena la lista de códigos de una falta con SOLO los del tipo elegido (y la labor, si es Calidad).
+function ncrPintarCodigos(div, conservar){
+  const tipo = div.dataset.tipo || '';
+  const sel = div.querySelector('.ncr-codigo');
+  const info = div.querySelector('.ncr-info');
+  if(!tipo){
+    sel.innerHTML = '<option value="">Primero elige el tipo (S, D, C o A)</option>';
+    sel.disabled = true; info.classList.add('hidden'); return;
+  }
+  const labor = ncrLaborActual();
+  const lista = ncrCodigosDe(tipo, labor);
+  let html = '<option value="">---Código de la falta---</option>';
+  if(tipo === 'C' && !(labor && NCR_LABORES.includes(labor))){
+    const grupos = [];
+    lista.forEach(x=>{ let g = grupos.find(y=>y.n===x.g); if(!g){ g={n:x.g, op:[]}; grupos.push(g); } g.op.push(x); });
+    html += grupos.map(g=>'<optgroup label="'+escapeHtml(g.n)+'">'+g.op.map(x=>'<option value="'+x.c+'">'+x.c+' — '+escapeHtml(x.t)+'</option>').join('')+'</optgroup>').join('');
+  }else{
+    html += lista.map(x=>'<option value="'+x.c+'">'+x.c+' — '+escapeHtml(x.t)+'</option>').join('');
+  }
+  sel.innerHTML = html;
+  sel.disabled = false;
+  if(conservar && lista.some(x=>x.c===conservar)) sel.value = conservar;
+  ncrMostrarInfo(div);
+}
+function ncrMostrarInfo(div){
+  const info = div.querySelector('.ncr-info');
+  const it = ncrBuscarCodigo(div.dataset.tipo, div.querySelector('.ncr-codigo').value);
+  if(it && it.r){ info.textContent = 'Rango permitido: '+it.r; info.classList.remove('hidden'); }
+  else info.classList.add('hidden');
+}
+function ncrElegirTipo(div, tipo, conservarCodigo){
+  div.dataset.tipo = tipo;
+  div.querySelectorAll('.ncr-tipo').forEach(b=>b.classList.toggle('sel', b.dataset.t === tipo));
+  const u = div.querySelector('.ncr-unidad');
+  if(tipo && !u.value) u.value = (tipo === 'C') ? '' : 'Evento';
+  ncrPintarCodigos(div, conservarCodigo);
+}
+
+function ncrAgregarFalta(datos){
+  if(ncrFaltasEls().length >= NCR_MAX_FALTAS){ toast('Máximo '+NCR_MAX_FALTAS+' faltas por reporte'); return null; }
+  const div = document.createElement('div');
+  div.className = 'ent-fila ncr-falta';
+  div.dataset.tipo = '';
+  div.innerHTML = `
+    <div class="ent-fila-top"><b class="ncr-num"></b><button type="button" class="ent-quitar ncr-quitar">Quitar</button></div>
+    <label>Tipo de no conformidad</label>
+    <div class="ncr-tipos">${NCR_TIPOS.map(t=>'<button type="button" class="ncr-tipo ncr-t-'+t.k+'" data-t="'+t.k+'"><b>'+t.k+'</b><span>'+t.n+'</span></button>').join('')}</div>
+    <label>Código de la falta</label>
+    <select class="ncr-codigo" disabled></select>
+    <div class="ncr-info hidden"></div>
+    <div class="ncr-fila-3">
+      <div><label>Cantidad</label><input type="text" class="ncr-cant" inputmode="decimal" value="1" autocomplete="off"></div>
+      <div><label>Unidad</label><input type="text" class="ncr-unidad" list="ncr_unidadLista" placeholder="Ej: Palmas" autocomplete="off"></div>
+    </div>
+    <label>Acción a tomar</label>
+    <select class="ncr-accion"><option value="">---Acción---</option>${NCR_ACCIONES.map(a=>'<option value="'+a+'">'+a+'</option>').join('')}</select>
+    <label>Cumple <span style="font-weight:500;">(si ya se verificó)</span></label>
+    <select class="ncr-cumple"><option value="">Sin verificar</option><option value="SI">Sí cumple</option><option value="NO">No cumple</option></select>`;
+  div.querySelector('.ncr-quitar').addEventListener('click', ()=>{ div.remove(); ncrActualizarFaltas(); });
+  div.querySelectorAll('.ncr-tipo').forEach(b=> b.addEventListener('click', ()=>{
+    div.querySelector('.ncr-unidad').value = '';
+    ncrElegirTipo(div, b.dataset.t);
+  }));
+  div.querySelector('.ncr-codigo').addEventListener('change', ()=> ncrMostrarInfo(div));
+  document.getElementById('ncr_faltasWrap').appendChild(div);
+  ncrPintarCodigos(div);
+  if(datos){
+    div.querySelector('.ncr-cant').value = datos.cantidad || 1;
+    div.querySelector('.ncr-unidad').value = datos.unidad || '';
+    div.querySelector('.ncr-accion').value = datos.accion || '';
+    div.querySelector('.ncr-cumple').value = datos.cumple || '';
+    ncrElegirTipo(div, datos.tipo, datos.codigo);
+    div.querySelector('.ncr-unidad').value = datos.unidad || '';
+    ncrMostrarInfo(div);
+  }
+  ncrActualizarFaltas();
+  return div;
+}
+function ncrReiniciarFaltas(){
+  document.getElementById('ncr_faltasWrap').innerHTML = '';
+  ncrAgregarFalta();
+}
+// Si cambia la labor, se vuelven a filtrar los códigos de Calidad ya elegidos.
+function ncrRefiltrarCalidad(){
+  ncrFaltasEls().forEach(div=>{
+    if(div.dataset.tipo === 'C') ncrPintarCodigos(div, div.querySelector('.ncr-codigo').value);
+  });
+}
+
+// ---------- buscador de trabajadores (misma lista que EPP) ----------
+function ncrSetupAutocomplete(){
+  const input = document.getElementById('ncr_fNombre');
+  const list = document.getElementById('ncr_fNombreList');
+  const cedula = document.getElementById('ncr_fCedula');
+  function renderList(q){
+    const query = q.trim().toUpperCase();
+    if(!query){ list.classList.add('hidden'); return; }
+    const matches = PERSONAS.filter(p => p.nombre.includes(query)).slice(0, 8);
+    if(matches.length===0){
+      list.innerHTML = '<div class="ac-empty">No está en el listado — puedes escribir el nombre y la cédula igual.</div>';
+    }else{
+      list.innerHTML = matches.map(p=>{
+        const idx = p.nombre.indexOf(query);
+        const marked = idx>=0 ? p.nombre.slice(0,idx)+'<b>'+p.nombre.slice(idx, idx+query.length)+'</b>'+p.nombre.slice(idx+query.length) : p.nombre;
+        return '<div class="ac-item" data-nombre="'+p.nombre.replace(/"/g,'&quot;')+'" data-cedula="'+p.cedula+'">'+marked+'<span class="ced">C.C. '+p.cedula+'</span></div>';
+      }).join('');
+    }
+    list.classList.remove('hidden');
+  }
+  input.addEventListener('input', ()=>{
+    if(ncrCedulaAuto){ cedula.value = ''; ncrCedulaAuto = false; }
+    renderList(input.value);
+  });
+  input.addEventListener('focus', ()=>{ if(input.value.trim()) renderList(input.value); });
+  cedula.addEventListener('input', ()=>{ ncrCedulaAuto = false; });
+  document.addEventListener('click', (e)=>{
+    if(!e.target.closest('#ncr_fNombreList') && e.target!==input) list.classList.add('hidden');
+  });
+  list.addEventListener('click', (e)=>{
+    const item = e.target.closest('.ac-item');
+    if(!item || !item.dataset.nombre) return;
+    input.value = item.dataset.nombre;
+    cedula.value = item.dataset.cedula;
+    ncrCedulaAuto = true;
+    list.classList.add('hidden');
+  });
+}
+
+// ---------- guardar / reiniciar / editar ----------
+function ncrResetForm(){
+  document.getElementById('ncr_fFecha').value = hoyISO();
+  document.getElementById('ncr_fNombre').value = '';
+  document.getElementById('ncr_fCedula').value = '';
+  document.getElementById('ncr_fLabor').value = '';
+  document.getElementById('ncr_fLaborOtra').value = '';
+  document.getElementById('ncr_laborOtraWrap').classList.add('hidden');
+  document.getElementById('ncr_lote').value = '';
+  document.getElementById('ncr_fObs').value = '';
+  ncrCedulaAuto = false;
+  ncrReiniciarFaltas();
+  ncrSigPads.trabajador.clear();
+}
+function ncrLoadHeader(){
+  try{ const h = JSON.parse(localStorage.getItem('ncr_header')||'{}'); if(h.reporta) document.getElementById('ncr_fReporta').value = h.reporta; }catch(e){}
+}
+function ncrSaveHeader(){
+  try{ localStorage.setItem('ncr_header', JSON.stringify({reporta: document.getElementById('ncr_fReporta').value.trim()})); }catch(e){}
+}
+
+function ncrShowRecap(record){
+  const wrap = document.getElementById('ncr_recapWrap');
+  const chip = document.createElement('div');
+  chip.className = 'hist-item';
+  chip.innerHTML = '<div class="hist-top"><b>'+escapeHtml(record.trabajador)+'</b><span class="badge M">'+record.faltas.length+' falta(s) reportada(s)</span></div>';
+  wrap.prepend(chip);
+}
+
+function ncrGuardar(){
+  const fecha = document.getElementById('ncr_fFecha').value;
+  const reporta = document.getElementById('ncr_fReporta').value.trim();
+  const trabajador = document.getElementById('ncr_fNombre').value.trim();
+  const cedula = document.getElementById('ncr_fCedula').value.trim();
+  const labor = ncrLaborActual();
+  const lugar = document.getElementById('ncr_lote').value;
+  if(!fecha){ toast('Falta la fecha'); return; }
+  if(!reporta){ toast('Falta el nombre de quien reporta'); return; }
+  if(!trabajador){ toast('Falta el nombre del trabajador'); return; }
+  if(!cedula){ toast('Falta la cédula del trabajador'); return; }
+  if(!labor){ toast('Falta la labor'); return; }
+  if(!lugar){ toast('Falta el lugar / lote'); return; }
+
+  const faltas = [];
+  const filas = ncrFaltasEls();
+  for(let i=0;i<filas.length;i++){
+    const f = filas[i], n = i+1;
+    const tipo = f.dataset.tipo;
+    const codigo = f.querySelector('.ncr-codigo').value;
+    const cantTxt = f.querySelector('.ncr-cant').value.trim().replace(',', '.');
+    const unidad = f.querySelector('.ncr-unidad').value.trim();
+    const accion = f.querySelector('.ncr-accion').value;
+    if(!tipo){ toast('Falta elegir el tipo (S, D, C o A) en la falta '+n); return; }
+    if(!codigo){ toast('Falta el código en la falta '+n); return; }
+    const cantidad = Number(cantTxt);
+    if(!cantTxt || !isFinite(cantidad) || cantidad<=0){ toast('La cantidad de la falta '+n+' debe ser un número mayor que 0'); return; }
+    if(!unidad){ toast('Falta la unidad en la falta '+n); return; }
+    if(!accion){ toast('Falta la acción a tomar en la falta '+n); return; }
+    const it = ncrBuscarCodigo(tipo, codigo);
+    faltas.push({tipo, tipo_nombre: NCR_TIPOS.find(t=>t.k===tipo).n, codigo, descripcion: it ? it.t : '', rango: it ? (it.r||'') : '',
+      cantidad, unidad, accion, cumple: f.querySelector('.ncr-cumple').value});
+  }
+  if(faltas.length===0){ toast('Agrega al menos una falta'); return; }
+  if(!ncrSigPads.reporta.drawn){ toast('Falta la firma de quien reporta'); return; }
+  if(!ncrSigPads.trabajador.drawn){ toast('Falta la firma del trabajador'); return; }
+
+  const prev = ncrEditingId ? ncrRecords.find(r=>r.id===ncrEditingId) : null;
+  const record = {
+    id: ncrEditingId || ('ncr_'+Date.now()+'_'+Math.random().toString(36).slice(2,7)),
+    fecha, reporta, trabajador, cedula, labor, lugar, faltas,
+    observaciones: document.getElementById('ncr_fObs').value.trim(),
+    firma_reporta_data: ncrSigPads.reporta.toDataURL(),
+    firma_trabajador_data: ncrSigPads.trabajador.toDataURL(),
+    codigo: prev ? (prev.codigo || udGenerarCodigo(fecha, cedula)) : udGenerarCodigo(fecha, cedula),
+    pa_estado: prev ? (prev.pa_estado || 'pendiente') : 'pendiente',
+    pa_enviado_at: prev ? prev.pa_enviado_at : undefined,
+    pa_dudosos: prev ? prev.pa_dudosos : undefined,
+    pa_ultimo_dudoso: prev ? prev.pa_ultimo_dudoso : undefined,
+    created_at: prev ? (prev.created_at || new Date().toISOString()) : new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  };
+  const editando = !!ncrEditingId;
+  if(editando){
+    const idx = ncrRecords.findIndex(r=>r.id===ncrEditingId);
+    if(idx>=0) ncrRecords[idx] = record; else ncrRecords.push(record);
+    ncrEditingId = null;
+    document.getElementById('ncr_editBanner').classList.add('hidden');
+  }else{
+    ncrRecords.unshift(record);
+  }
+  ncrSaveRecords();
+  ncrSaveHeader();
+  if(!editando) ncrShowRecap(record);
+  ncrResetForm();
+  toast(editando ? 'Cambios guardados ✓' : 'Guardado en este celular ✓ — '+trabajador);
+  ncrRenderHistorial();
+  ncrActualizarBannerPA();
+  ncrEnviarPendientes();
+}
+
+function ncrEditar(id){
+  const d = ncrRecords.find(r=>r.id===id);
+  if(!d){ toast('No se encontró el registro'); return; }
+  ncrEditingId = id;
+  document.getElementById('ncr_fFecha').value = d.fecha || '';
+  document.getElementById('ncr_fReporta').value = d.reporta || '';
+  document.getElementById('ncr_fNombre').value = d.trabajador || '';
+  document.getElementById('ncr_fCedula').value = d.cedula || '';
+  ncrCedulaAuto = false;
+  const enLista = NCR_LABORES.includes(d.labor);
+  document.getElementById('ncr_fLabor').value = enLista ? d.labor : (d.labor ? 'otra' : '');
+  document.getElementById('ncr_laborOtraWrap').classList.toggle('hidden', enLista || !d.labor);
+  document.getElementById('ncr_fLaborOtra').value = enLista ? '' : (d.labor || '');
+  document.getElementById('ncr_lote').value = d.lugar || '';
+  document.getElementById('ncr_fObs').value = d.observaciones || '';
+  document.getElementById('ncr_faltasWrap').innerHTML = '';
+  (d.faltas||[]).forEach(f=> ncrAgregarFalta(f));
+  if(ncrFaltasEls().length===0) ncrAgregarFalta();
+  ncrSigPads.reporta.loadExisting(d.firma_reporta_data);
+  ncrSigPads.trabajador.loadExisting(d.firma_trabajador_data);
+  document.getElementById('ncr_editBanner').classList.remove('hidden');
+  document.getElementById('screen-ncr').querySelector('.tab[data-tab="nueva"]').click();
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+function ncrCancelarEdicion(){
+  ncrEditingId = null;
+  document.getElementById('ncr_editBanner').classList.add('hidden');
+  ncrResetForm();
+}
+function ncrEliminar(id){
+  const r = ncrRecords.find(x=>x.id===id);
+  const msg = (r && (ncrEstaPendiente(r) || ncrEstaPorRevisar(r)) && NCR_PA_WEBHOOK_URL)
+    ? '⚠️ Este reporte NO está confirmado en el Excel. Si lo eliminas, puede perderse por completo. ¿Eliminar de todas formas?'
+    : '¿Eliminar este reporte guardado en el celular? No se puede deshacer.';
+  if(!confirm(msg)) return;
+  ncrRecords = ncrRecords.filter(x=>x.id!==id);
+  ncrSaveRecords();
+  ncrRenderHistorial();
+  ncrActualizarBannerPA();
+  toast('Eliminado');
+}
+
+// ---------- historial ----------
+function ncrRenderHistorial(){
+  const list = document.getElementById('ncr_histList');
+  const fFecha = document.getElementById('ncr_filFecha').value;
+  const fTexto = document.getElementById('ncr_filTexto').value.trim().toLowerCase();
+  let docs = [...ncrRecords];
+  if(fFecha) docs = docs.filter(d=>d.fecha===fFecha);
+  if(fTexto) docs = docs.filter(d=> ((d.trabajador||'')+' '+(d.cedula||'')).toLowerCase().includes(fTexto));
+  if(docs.length===0){ list.innerHTML = '<div class="empty">No hay reportes guardados en este celular.</div>'; return; }
+  list.innerHTML = docs.map(d=>{
+    const resumen = (d.faltas||[]).map(f=> '<b>'+f.tipo+'</b> '+escapeHtml(f.codigo)+' — '+escapeHtml(f.descripcion)+' ('+f.cantidad+' '+escapeHtml(f.unidad)+') · '+escapeHtml(f.accion)).join('<br>');
+    let estado = '';
+    if(NCR_PA_WEBHOOK_URL){
+      estado = d.pa_estado==='pendiente'
+        ? (ncrEnviandoId===d.id
+            ? '<div class="hist-badges"><span class="badge warn">📤 Enviando…</span></div>'
+            : '<div class="hist-badges"><span class="badge warn">⏳ Pendiente de enviar</span></div><div class="hist-actions"><button class="btn-edit" data-enviarid="'+d.id+'" type="button">↑ Enviar ahora</button></div>')
+        : d.pa_estado==='revisar'
+          ? '<div class="hist-badges"><span class="badge M">⚠️ Sin confirmar — revisa si está en el Excel</span></div><div class="hist-actions"><button class="btn-edit" data-reenviarid="'+d.id+'" type="button">↻ Reenviar</button><button class="btn-edit" data-okid="'+d.id+'" type="button">✓ Ya está en el Excel</button></div>'
+          : d.pa_estado==='enviado' ? '<div class="hist-badges"><span class="badge ok">✓ Enviado</span></div>' : '';
+    }
+    return `
+      <div class="hist-item" data-id="${d.id}">
+        <div class="hist-top">
+          <div>
+            <b>${escapeHtml(d.trabajador||'—')}</b>
+            <div class="hist-meta">C.C. ${escapeHtml(d.cedula||'—')} · ${d.fecha||''} · ${escapeHtml(d.labor||'')}</div>
+          </div>
+          <span class="badge M">${(d.faltas||[]).length} falta(s)</span>
+        </div>
+        <div class="hist-obs">${resumen}</div>
+        <div class="sig-thumbs">
+          <div class="sig-thumb"><div class="lbl">Quien reporta</div>${d.firma_reporta_data?`<img src="${d.firma_reporta_data}">`:'—'}</div>
+          <div class="sig-thumb"><div class="lbl">Trabajador</div>${d.firma_trabajador_data?`<img src="${d.firma_trabajador_data}">`:'—'}</div>
+        </div>
+        ${estado}
+        <div class="hist-actions">
+          <button class="btn-edit" data-editid="${d.id}" type="button">✏️ Editar</button>
+          <button class="btn-del" data-delid="${d.id}" type="button">🗑 Eliminar</button>
+        </div>
+      </div>`;
+  }).join('');
+  list.querySelectorAll('[data-editid]').forEach(b=> b.addEventListener('click', ()=> ncrEditar(b.dataset.editid)));
+  list.querySelectorAll('[data-enviarid]').forEach(b=> b.addEventListener('click', ()=> ncrEnviarPendientes(true, b.dataset.enviarid)));
+  list.querySelectorAll('[data-reenviarid]').forEach(b=> b.addEventListener('click', ()=> ncrReenviarRegistro(b.dataset.reenviarid)));
+  list.querySelectorAll('[data-okid]').forEach(b=> b.addEventListener('click', ()=> ncrMarcarComoEnviada(b.dataset.okid)));
+  list.querySelectorAll('[data-delid]').forEach(b=> b.addEventListener('click', ()=> ncrEliminar(b.dataset.delid)));
+}
+
+// ---------- exportar a Excel (una fila por falta) ----------
+async function ncrExportarExcel(){
+  if(ncrRecords.length===0){ toast('No hay reportes guardados en este celular para exportar'); return; }
+  const expBtn = document.getElementById('ncr_btnExport');
+  expBtn.disabled = true; expBtn.textContent = 'Generando Excel…';
+  try{
+    const wb = new ExcelJS.Workbook();
+    wb.creator = 'Reporte de no conformidad GE-FT-03';
+    const ordered = [...ncrRecords].sort((a,b)=> (a.created_at||'').localeCompare(b.created_at||''));
+    const THIN = {style:'thin', color:{argb:'FFDEDBD1'}};
+    const BORDER = {top:THIN, bottom:THIN, left:THIN, right:THIN};
+    const ws = wb.addWorksheet('No conformidades', {properties:{tabColor:{argb:'FFB23A2E'}}, views:[{state:'frozen', ySplit:1}]});
+    ws.columns = [
+      {header:'Fecha', key:'fecha', width:12},
+      {header:'Reporta', key:'reporta', width:26},
+      {header:'Trabajador', key:'trabajador', width:30},
+      {header:'Cédula', key:'cedula', width:14},
+      {header:'Labor', key:'labor', width:26},
+      {header:'Lugar / lote', key:'lugar', width:26},
+      {header:'Tipo', key:'tipo', width:8},
+      {header:'Código falta', key:'codigo', width:10},
+      {header:'Descripción de la falta', key:'desc', width:44},
+      {header:'Cantidad', key:'cantidad', width:10},
+      {header:'Unidad', key:'unidad', width:12},
+      {header:'Rango permitido', key:'rango', width:16},
+      {header:'Acción a tomar', key:'accion', width:24},
+      {header:'Cumple', key:'cumple', width:10},
+      {header:'Observaciones', key:'obs', width:34},
+      {header:'Firma quien reporta', width:20},
+      {header:'Firma trabajador', width:20},
+    ];
+    const primeras = [];
+    ordered.forEach(d=>{
+      (d.faltas||[]).forEach((f,i)=>{
+        const r = ws.addRow({fecha:d.fecha||'', reporta:d.reporta||'', trabajador:d.trabajador||'', cedula:d.cedula||'', labor:d.labor||'', lugar:d.lugar||'',
+          tipo:f.tipo, codigo:f.codigo, desc:f.descripcion, cantidad:f.cantidad, unidad:f.unidad, rango:f.rango||'', accion:f.accion, cumple:f.cumple||'', obs:d.observaciones||''});
+        if(i===0) primeras.push({d, row:r.number});
+      });
+    });
+    ws.getRow(1).height = 28;
+    ws.getRow(1).eachCell(c=>{
+      c.font = {bold:true, color:{argb:'FFFFFFFF'}, size:11};
+      c.fill = {type:'pattern', pattern:'solid', fgColor:{argb:'FF8A2D24'}};
+      c.alignment = {vertical:'middle', horizontal:'center', wrapText:true};
+      c.border = BORDER;
+    });
+    const COLORES = {S:'FFFBE4E1', D:'FFE9E2F3', C:'FFFBEBD8', A:'FFE4F1E5'};
+    for(let r=2;r<=ws.rowCount;r++){
+      ws.getRow(r).eachCell({includeEmpty:true}, c=>{ c.border = BORDER; c.alignment = {vertical:'middle', wrapText:true}; });
+      const t = ws.getRow(r).getCell(7);
+      if(COLORES[t.value]){ t.fill = {type:'pattern', pattern:'solid', fgColor:{argb:COLORES[t.value]}}; t.font = {bold:true}; t.alignment = {vertical:'middle', horizontal:'center'}; }
+    }
+    primeras.forEach(({d,row})=>{
+      ws.getRow(row).height = 46;
+      [[d.firma_reporta_data, 15], [d.firma_trabajador_data, 16]].forEach(([data, col])=>{
+        if(!data) return;
+        try{
+          const {buffer, extension} = dataURLtoBuffer(data);
+          const imgId = wb.addImage({buffer, extension});
+          ws.addImage(imgId, {tl:{col:col+0.05, row:row-0.95}, ext:{width:90, height:40}});
+        }catch(e){}
+      });
+    });
+    ws.autoFilter = {from:{row:1,column:1}, to:{row:1,column:ws.columns.length}};
+    const buf = await wb.xlsx.writeBuffer();
+    const blob = new Blob([buf], {type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+    descargarBlobDirecto(blob, 'no_conformidades.xlsx');
+    toast('Descargando… ('+(blob.size/1024/1024).toFixed(1)+' MB)');
+  }catch(e){
+    toast('No se pudo generar el Excel');
+    console.error(e);
+  }finally{
+    expBtn.disabled = false; expBtn.textContent = 'Exportar a Excel';
+  }
+}
+
+// ---------- envío a Power Automate ----------
+function ncrEstaPendiente(r){ return r.pa_estado === 'pendiente'; }
+function ncrEstaPorRevisar(r){ return r.pa_estado === 'revisar'; }
+// Sin flujo conectado no hay nada "por enviar": los reportes quedan guardados en el celular.
+function ncrContarPendientes(){ return NCR_PA_WEBHOOK_URL ? ncrRecords.filter(ncrEstaPendiente).length : 0; }
+function ncrContarPorRevisar(){ return NCR_PA_WEBHOOK_URL ? ncrRecords.filter(ncrEstaPorRevisar).length : 0; }
+
+function ncrActualizarBannerPA(){
+  const banner = document.getElementById('ncr_paBanner');
+  const texto = document.getElementById('ncr_paBannerText');
+  if(!banner) return;
+  const n = ncrContarPendientes(), m = ncrContarPorRevisar();
+  if(n===0 && m===0){ banner.classList.add('hidden'); return; }
+  banner.classList.remove('hidden');
+  const partes = [];
+  if(n>0) partes.push(navigator.onLine ? '⏳ '+n+' reporte(s) por enviar al Excel central' : '📴 Sin señal — '+n+' reporte(s) esperan para enviarse');
+  if(m>0) partes.push('⚠️ '+m+' sin confirmar: revisa si están en el Excel');
+  texto.textContent = partes.join(' · ');
+}
+
+async function ncrIntentarEnvioPA(record){
+  const payload = {
+    codigo: record.codigo,
+    fecha: record.fecha,
+    reporta: record.reporta,
+    trabajador: record.trabajador,
+    cedula: record.cedula,
+    labor: record.labor,
+    lugar: record.lugar,
+    observaciones: record.observaciones || '',
+    firma_reporta: soloBase64(record.firma_reporta_data),
+    firma_trabajador: soloBase64(record.firma_trabajador_data),
+    fotos: [],
+    renglones: (record.faltas||[]).map((f,i)=>({item:i+1, tipo:f.tipo, tipo_nombre:f.tipo_nombre, codigo_falta:f.codigo, descripcion:f.descripcion,
+      cantidad:f.cantidad, unidad:f.unidad, rango:f.rango||'', accion:f.accion, cumple:f.cumple||''})),
+  };
+  const ctrl = new AbortController();
+  const timer = setTimeout(()=>ctrl.abort(), NCR_PA_TIMEOUT_MS);
+  try{
+    await fetch(NCR_PA_WEBHOOK_URL, {method:'POST', mode:'no-cors', headers:{'Content-Type':'text/plain'}, body: JSON.stringify(payload), signal: ctrl.signal});
+    return 'ok';
+  }catch(e){
+    console.error('Envío a Power Automate (no conformidad):', e);
+    return (e && e.name === 'AbortError') ? 'tiempo' : 'red';
+  }finally{
+    clearTimeout(timer);
+  }
+}
+
+async function ncrPasadaDeEnvio(manual, soloId){
+  ncrLoadRecords();
+  const ahora = Date.now();
+  const cola = ncrRecords.filter(ncrEstaPendiente)
+    .filter(r => !soloId || r.id === soloId)
+    .filter(r => manual || !r.pa_ultimo_dudoso || (ahora - r.pa_ultimo_dudoso) > NCR_PA_ENFRIAMIENTO_MS)
+    .sort((a,b)=> (a.created_at||'').localeCompare(b.created_at||''));
+  let enviadas = 0, dudosas = 0;
+  for(const r of cola){
+    const actual = ncrRecords.find(x=>x.id===r.id);
+    if(!actual || !ncrEstaPendiente(actual)) continue;
+    ncrEnviandoId = actual.id;
+    ncrRenderHistorial();
+    const res = await ncrIntentarEnvioPA(actual);
+    ncrEnviandoId = null;
+    if(res === 'red') break;
+    const vigente = ncrRecords.find(x=>x.id===r.id);
+    if(!vigente) continue;
+    if(res === 'ok'){
+      vigente.pa_estado = 'enviado';
+      vigente.pa_enviado_at = new Date().toISOString();
+      vigente.pa_dudosos = undefined; vigente.pa_ultimo_dudoso = undefined;
+      enviadas++;
+    }else{
+      vigente.pa_dudosos = (vigente.pa_dudosos||0) + 1;
+      vigente.pa_ultimo_dudoso = Date.now();
+      if(vigente.pa_dudosos >= NCR_PA_MAX_DUDOSOS) vigente.pa_estado = 'revisar';
+      dudosas++;
+    }
+    ncrSaveRecords();
+  }
+  if(enviadas>0) toast('✓ '+enviadas+' reporte(s) enviado(s)');
+  else if(dudosas>0) toast('⚠️ El flujo tardó en contestar: se revisará en unos minutos');
+}
+
+async function ncrEnviarPendientes(manual, soloId){
+  if(!NCR_PA_WEBHOOK_URL){ if(manual) toast('Este formulario aún no tiene flujo conectado'); return; }
+  if(ncrEnviandoPA){ if(manual) toast('Ya hay un envío en curso, espera un momento'); return; }
+  if(!navigator.onLine){
+    if(manual) toast('Sin señal: se enviará solo cuando vuelva');
+    ncrActualizarBannerPA();
+    return;
+  }
+  ncrEnviandoPA = true;
+  try{
+    if(typeof navigator.locks !== 'undefined' && navigator.locks.request){
+      await navigator.locks.request('ncr-envio-pa', {ifAvailable:true}, async (lock)=>{
+        if(!lock){ if(manual) toast('Otra ventana está enviando, espera un momento'); return; }
+        await ncrPasadaDeEnvio(manual === true, soloId);
+      });
+    }else{
+      await ncrPasadaDeEnvio(manual === true, soloId);
+    }
+  }finally{
+    ncrEnviandoPA = false;
+    ncrEnviandoId = null;
+    ncrActualizarBannerPA();
+    ncrRenderHistorial();
+  }
+}
+function ncrReenviarRegistro(id){
+  const r = ncrRecords.find(x=>x.id===id);
+  if(!r) return;
+  r.pa_estado = 'pendiente'; r.pa_dudosos = undefined; r.pa_ultimo_dudoso = undefined;
+  ncrSaveRecords(); ncrActualizarBannerPA(); ncrRenderHistorial();
+  ncrEnviarPendientes(true);
+}
+function ncrMarcarComoEnviada(id){
+  const r = ncrRecords.find(x=>x.id===id);
+  if(!r) return;
+  r.pa_estado = 'enviado'; r.pa_enviado_at = new Date().toISOString(); r.pa_dudosos = undefined; r.pa_ultimo_dudoso = undefined;
+  ncrSaveRecords(); ncrActualizarBannerPA(); ncrRenderHistorial();
+}
+
+// ---------- arranque de este formulario ----------
+function ncrInit(){
+  const screen = document.getElementById('screen-ncr');
+  screen.innerHTML = ncrRenderScreenHtml();
+  document.getElementById('ncr_fFecha').value = hoyISO();
+  ncrLoadRecords();
+  ncrLoadHeader();
+  ncrAgregarFalta();
+  createSignaturePad(ncrSigPads, 'reporta', 'ncr_sig_reporta', 'ncr_sigClear_reporta', 'ncr_sigReportaStatus');
+  createSignaturePad(ncrSigPads, 'trabajador', 'ncr_sig_trabajador', 'ncr_sigClear_trabajador', null);
+  ncrSetupAutocomplete();
+  setupTabs(screen, ()=>ncrRenderHistorial());
+  document.getElementById('ncr_fLabor').addEventListener('change', ()=>{
+    const otra = document.getElementById('ncr_fLabor').value === 'otra';
+    document.getElementById('ncr_laborOtraWrap').classList.toggle('hidden', !otra);
+    ncrRefiltrarCalidad();
+  });
+  document.getElementById('ncr_btnAgregar').addEventListener('click', ()=>{ ncrAgregarFalta(); });
+  document.getElementById('ncr_btnGuardar').addEventListener('click', ncrGuardar);
+  document.getElementById('ncr_btnCancelarEdicion').addEventListener('click', ncrCancelarEdicion);
+  document.getElementById('ncr_btnExport').addEventListener('click', ncrExportarExcel);
+  document.getElementById('ncr_filFecha').addEventListener('change', ncrRenderHistorial);
+  document.getElementById('ncr_filTexto').addEventListener('input', ncrRenderHistorial);
+  document.getElementById('ncr_btnReenviar').addEventListener('click', ()=>ncrEnviarPendientes(true));
+  ncrSaveRecords();
+  ncrRenderHistorial();
+  ncrActualizarBannerPA();
+  window.addEventListener('online', ()=>{ ncrActualizarBannerPA(); ncrEnviarPendientes(); });
+  window.addEventListener('offline', ncrActualizarBannerPA);
+  window.addEventListener('storage', (e)=>{
+    if(e.key === NCR_RECORDS_KEY){ ncrLoadRecords(); ncrRenderHistorial(); ncrActualizarBannerPA(); }
+  });
+  document.addEventListener('visibilitychange', ()=>{ if(!document.hidden) ncrEnviarPendientes(); });
+  setInterval(()=>{ if(ncrContarPendientes()>0) ncrEnviarPendientes(); }, 60000);
+  setTimeout(()=> ncrEnviarPendientes(), 0);
+}
+
+
 // =========================== REPORTE DE INCIDENTE (formato de la ARL) ===========================
 // Quién se accidentó (II), cuándo y dónde pasó (III) y qué pasó (IV: solo la descripción).
 // Va a su propio Excel (tabla TablaIncidentes) por un flujo de Power Automate.
@@ -7333,7 +8077,7 @@ function incInit(){
 }
 
 // Versión de la app: se muestra al final de la pantalla de inicio para saber qué copia tiene cada celular.
-const APP_VERSION = '2026-11-17 15:40';
+const APP_VERSION = '2026-11-18 10:30';
 
 // =========================== INICIO: buscador, pendientes y checklists ===========================
 function quitarTildes(s){ return String(s).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,''); }
@@ -7361,6 +8105,7 @@ function pendientesPorFormulario(){
   pend.ext = extContarPendientes();  rev.ext = extContarPorRevisar();
   pend.entrega = entContarPendientes();  rev.entrega = entContarPorRevisar();
   pend.inc = incContarPendientes();  rev.inc = incContarPorRevisar();
+  pend.ncr = ncrContarPendientes();  rev.ncr = ncrContarPorRevisar();
   Object.keys(EQUIPO_CONFIGS).forEach(t=>{ pend[t] = eqpContarPendientes(t); rev[t] = eqpContarPorRevisar(t); });
   Object.keys(UNIDAD_CONFIGS).forEach(t=>{ pend[t] = udContarPendientesEnvio(t); rev[t] = udContarPorRevisarEnvio(t); });
   return {pend, rev};
@@ -7396,7 +8141,7 @@ function refrescarInicio(){
 }
 
 function instalarInicio(){
-  document.getElementById('homeVersion').textContent = 'Versión ' + APP_VERSION + ' · Entrega de EPP: ' + (ENT_PA_WEBHOOK_URL ? 'flujo conectado' : 'sin flujo conectado') + ' · Reporte de incidente: ' + (INC_PA_WEBHOOK_URL ? 'flujo conectado' : 'sin flujo conectado') + ' · Corrales de ganadería: ' + (UNIDAD_CONFIGS.corrales.paWebhookUrl ? 'flujo conectado' : 'sin flujo conectado');
+  document.getElementById('homeVersion').textContent = 'Versión ' + APP_VERSION + ' · Entrega de EPP: ' + (ENT_PA_WEBHOOK_URL ? 'flujo conectado' : 'sin flujo conectado') + ' · Reporte de incidente: ' + (INC_PA_WEBHOOK_URL ? 'flujo conectado' : 'sin flujo conectado') + ' · Corrales de ganadería: ' + (UNIDAD_CONFIGS.corrales.paWebhookUrl ? 'flujo conectado' : 'sin flujo conectado') + ' · No conformidad: ' + (NCR_PA_WEBHOOK_URL ? 'flujo conectado' : 'sin flujo conectado');
   document.getElementById('homeBuscar').addEventListener('input', filtrarInicio);
   window.addEventListener('online', refrescarInicio);
   window.addEventListener('offline', refrescarInicio);
@@ -7471,6 +8216,7 @@ function vigilarChecklist(wrap){
   ['bicicletas','camilla'].forEach(udInit);
   entInit();
   incInit();
+  ncrInit();
   setupHomeNav();
   Object.keys(EQUIPO_CONFIGS).forEach(t=>{ vigilarChecklist(document.getElementById(t+'_itemsWrap')); vigilarChecklist(document.getElementById(t+'_pregWrap')); });
   Object.keys(UNIDAD_CONFIGS).forEach(t=> vigilarChecklist(document.getElementById(t+'_itemsWrap')));
