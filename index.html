@@ -4697,7 +4697,7 @@ const UNIDAD_CONFIGS = {
     firmas: [{key:'trabajador', label:'Firma del trabajador'}, {key:'responsable', label:'Firma del responsable de la inspección'}],
   },
   corrales: {
-    paWebhookUrl: '', // CORRALES_URL (se completa cuando exista el flujo)
+    paWebhookUrl: 'https://defaultc30619979f9e4ad6a335e5e17e5f19.4a.environment.api.powerplatform.com:443/powerautomate/automations/direct/cu/11/workflows/e68194fc8b7a4f509db80011ba003f82/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=RTNFowbIgii8nNQd5Re5_jqU-t_9YDmLDunhTqkJin0',
     titulo: 'Corrales de ganadería', codigo: '',
     subtitulo: 'Instalaciones, orden y aseo, y seguridad',
     idLabel: 'Finca / Plantación', idPlaceholder: 'Nombre de la finca o plantación',
@@ -8077,7 +8077,7 @@ function incInit(){
 }
 
 // Versión de la app: se muestra al final de la pantalla de inicio para saber qué copia tiene cada celular.
-const APP_VERSION = '2026-11-19 10:30';
+const APP_VERSION = '2026-11-19 14:30';
 
 // =========================== INICIO: buscador, pendientes y checklists ===========================
 function quitarTildes(s){ return String(s).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,''); }
