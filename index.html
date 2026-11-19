@@ -5924,7 +5924,7 @@ function udInit(tipo){
 const ENT_PA_WEBHOOK_URL = 'https://defaultc30619979f9e4ad6a335e5e17e5f19.4a.environment.api.powerplatform.com:443/powerautomate/automations/direct/cu/17/workflows/a6c01e169937456a83cfe49b70a0c5d3/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=PDKQJi6DrpotsUZpVle2_YsO7gn9APUI7NTk3M-wUtw';
 const ENT_RECORDS_KEY = 'ent_records_v1';
 const ENT_MAX_FILAS = 15;
-const ENT_SUGERENCIAS = ['Casco','Guantes','Botas','Protección auditiva','Canilleras','Careta','Protección visual','Protección respiratoria'];
+const ENT_SUGERENCIAS = ["Guantes anticorte", "Guantes de nitrilo", "Guantes de nylon", "Guantes palmeros", "Guantes de vaqueta reforzados", "Guantes tipo ingeniero", "Casco", "Araña para casco", "Barbuquejo", "Pava", "Capuchón", "Gafas transparentes", "Gafas oscuras", "Careta", "Tapabocas N95", "Tapaboca industrial", "Mascarilla 3M", "Filtro para vapores", "Prefiltros", "Protector auditivo de copa", "Protector auditivo de inserción", "Overol antifluido", "Peto", "Impermeable de dos piezas", "Botas con punta de acero", "Botas de caucho"];
 const ENT_COMPROMISO = ["Me comprometo a utilizar adecuadamente durante la jornada laboral los elementos de proteccion personal recibidos y mantenerlos en buen estado, dando cumplimiento a las normas de seguridad y salud en el trabajo  que contribuyen a mi bienestar fisico, psicológico y social. Declaro que he recibido información sobre el uso adecuado de los mismos.", "Usando los equipos y elementos de protección personal (incluyendo ropa de trabajo) estoy cumpliendo con mis deberes como trabajador definidos en la ley a través de la siguiente normatividad: CODIGO SUSTANTIVO DEL TRABAJO; Art. 56 y Art. 58 numeral 7; LEY 9 DE 1979; Art. 88; DECRETO 1295 DE 1994: Art. 22. Soy responsable del uso y cuidado de los EPP mismo so pena de verme inmerso en faltas penales o disciplinarias. El presente compromiso quedará archivado en el area de Gestión de Talento Humano,  Seguridad y Salud en el Trabajo como sistema de verificación y seguimiento del cumplimiento de mis deberes y derechos como empleado de INVERSIONES LOS MARACOS S.A.S", "Ademas de lo anterior, me comprometo a:\na - Utilizar y cuidar correctamente los equipos de protección individual.\nb - Colocar el equipo de protección individual después de su utilización en el lugar indicado para ello.\nc - Informar al area Seguridad y Salud en el Trabajo cualquier defecto, anomalía o daño apreciado en el equipo de protección individual utilizado que, a su juicio, pueda entrañar una pérdida de su eficacia protectora.\nd - La autorización para entrega de los EPP, debe solicitada en el area de seguridad y salud en el trabajo, para su posterior entrega en el area de almacen.\ne - Para realizar el respectivo cambio del EPP, debe ser devuelto en el area de almacen el recibido anteriormente.          \nf - Decreto 1295 de 1994, artículo 91: Establece la obligatoriedad del uso de los Elementos de Protección Personal. El no uso de los mismos puede ser causal de despido.", "El presente compromiso aplica para los elementos de protección personal entregados."];
 const ENT_PA_TIMEOUT_MS = 100000;
 const ENT_PA_ENFRIAMIENTO_MS = 10*60*1000;
@@ -6044,7 +6044,7 @@ function entAgregarFila(datos){
   div.innerHTML = `
     <div class="ent-fila-top"><b class="ent-num"></b><button type="button" class="ent-quitar">Quitar</button></div>
     <label>EPP entregado</label>
-    <input type="text" class="ent-epp" list="ent_eppLista" placeholder="Ej: Casco, guantes, botas…" autocomplete="off">
+    <input type="text" class="ent-epp" list="ent_eppLista" placeholder="Toca y elige el EPP de la lista…" autocomplete="off">
     <div class="ent-fila-2">
       <div><label>Cantidad</label><input type="text" class="ent-cant" inputmode="numeric" value="1" autocomplete="off"></div>
       <div><label>Observaciones</label><input type="text" class="ent-obs" placeholder="Talla, motivo, reposición…" autocomplete="off"></div>
@@ -8077,7 +8077,7 @@ function incInit(){
 }
 
 // Versión de la app: se muestra al final de la pantalla de inicio para saber qué copia tiene cada celular.
-const APP_VERSION = '2026-11-18 12:30';
+const APP_VERSION = '2026-11-19 08:45';
 
 // =========================== INICIO: buscador, pendientes y checklists ===========================
 function quitarTildes(s){ return String(s).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,''); }
